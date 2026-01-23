@@ -281,37 +281,41 @@ def create_features(df):
         season_team["HistSuperiority"] = (
             season_team.groupby("Team")["PostSuperiority"]
             .shift(1)
-            .reset_index(drop=True)
             .fillna(0)
+            .groupby(season_team["Team"])
             .ewm(alpha=decay, adjust=False)
             .mean()
+            .reset_index(level=0, drop=True)
         )
 
         season_team["HistRankPerformance"] = (
             season_team.groupby("Team")["PostRankPerformance"]
             .shift(1)
-            .reset_index(drop=True)
             .fillna(0)
+            .groupby(season_team["Team"])
             .ewm(alpha=decay, adjust=False)
             .mean()
+            .reset_index(level=0, drop=True)
         )
 
         season_team["HistPointPerformance"] = (
             season_team.groupby("Team")["PostPointPerformance"]
             .shift(1)
-            .reset_index(drop=True)
             .fillna(0)
+            .groupby(season_team["Team"])
             .ewm(alpha=decay, adjust=False)
             .mean()
+            .reset_index(level=0, drop=True)
         )
 
         season_team["HistTotalPerformance"] = (
             season_team.groupby("Team")["TotalPostPerformance"]
             .shift(1)
-            .reset_index(drop=True)
             .fillna(0)
+            .groupby(season_team["Team"])
             .ewm(alpha=decay, adjust=False)
             .mean()
+            .reset_index(level=0, drop=True)
         )
 
         df = df.merge(
