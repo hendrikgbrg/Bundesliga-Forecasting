@@ -1,6 +1,7 @@
 from pathlib import Path
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 base_dir = Path(__file__).resolve().parent
 src_dir = (base_dir / "../../data/04_Merged").resolve()
@@ -166,14 +167,16 @@ def create_features(df):
                     "Date",
                     "Team",
                     "PriorRank",
+                    "PostRank",
                     "LowestPriorRank",
+                    "LowestPostRank",
                     "MinPriorPoints",
                     "MaxPriorPoints",
                     "MinPostPoints",
                     "MaxPostPoints",
                 ]
             ],
-            on=["Season", "Div", "Date", "Team"],
+            on=["Season", "Date", "Team"],
             how="left",
         )
 
@@ -188,28 +191,46 @@ def create_features(df):
         )
         return df
 
-    def team_strength(df):
+    def team_superiority(df):
         prior_games = df.groupby(["Season", "Team"]).cumcount().replace(0, 1)
-        df["TeamStrength"] = (
+        df["PriorSuperiority"] = (
             df["TotalGoalsFor"] - df["TotalGoalsAgainst"]
         ) / prior_games
+        df["PostSuperiority"] = (
+            df["TotalGoalsFor"]
+            + df["GoalsFor"]
+            - df["TotalGoalsAgainst"]
+            - df["GoalsAgainst"]
+        ) / 34
         return df
 
     def rank_performance(df):
-        df["RankPerformance"] = 1 - 2 * (
+        df["PriorRankPerformance"] = 1 - 2 * (
             (df["PriorRank"] - 1) / np.maximum(df["LowestPriorRank"] - 1, 1)
+        )
+        df["PostRankPerformance"] = 1 - 2 * (
+            (df["PostRank"] - 1) / np.maximum(df["LowestPostRank"] - 1, 1)
         )
         return df
 
     def point_performance(df):
-        df["PointPerformance"] = 1 - 2 * (
+        df["PriorPointPerformance"] = 1 - 2 * (
             (df["MaxPriorPoints"] - df["TotalPoints"])
             / np.maximum(df["MaxPriorPoints"] - df["MinPriorPoints"], 1)
         )
+        df["PostPointPerformance"] = 1 - 2 * (
+            (df["MaxPostPoints"] - df["TotalPoints"] - df["Points"])
+            / np.maximum(df["MaxPostPoints"] - df["MinPostPoints"], 1)
+        )
         return df
 
-    def combined_performance(df):
-        df["CombinedPerformance"] = (df["RankPerformance"] + df["PointPerformance"]) / 2
+    def total_performance(df):
+        df["TotalPriorPerformance"] = (
+            df["PriorRankPerformance"] + df["PriorPointPerformance"]
+        ) / 2
+        df["TotalPostPerformance"] = (
+            df["PostRankPerformance"] + df["PostPointPerformance"]
+        ) / 2
         return df
 
     def win_loss_rate(df):
@@ -240,6 +261,10 @@ def create_features(df):
             "GoalsAgainst",
             "TotalGoalsFor",
             "TotalGoalsAgainst",
+            "PostSuperiority",
+            "PostRankPerformance",
+            "PostPointPerformance",
+            "TotalPostPerformance",
         ]
         # create calender to log all team results for all seasons
         seasons = df["Season"].drop_duplicates()
@@ -252,30 +277,57 @@ def create_features(df):
         season_team = season_team.merge(
             season_end, on=["Season", "Team"], how="left"
         ).fillna(0)
-        season_team = season_team.sort_values(["Team", "Season"])
-        season_team["SeasonStrength"] = (
-            season_team["TotalGoalsFor"]
-            + season_team["GoalsFor"]
-            - season_team["TotalGoalsAgainst"]
-            - season_team["GoalsAgainst"]
-        ) / 34
-        season_team["HistTeamStrength"] = (
-            season_team.groupby("Team")["SeasonStrength"]
-            .ewm(alpha=decay, adjust=False)
-            .mean()
+
+        season_team["HistSuperiority"] = (
+            season_team.groupby("Team")["PostSuperiority"]
             .shift(1)
             .reset_index(drop=True)
             .fillna(0)
+            .ewm(alpha=decay, adjust=False)
+            .mean()
+        )
+
+        season_team["HistRankPerformance"] = (
+            season_team.groupby("Team")["PostRankPerformance"]
+            .shift(1)
+            .reset_index(drop=True)
+            .fillna(0)
+            .ewm(alpha=decay, adjust=False)
+            .mean()
+        )
+
+        season_team["HistPointPerformance"] = (
+            season_team.groupby("Team")["PostPointPerformance"]
+            .shift(1)
+            .reset_index(drop=True)
+            .fillna(0)
+            .ewm(alpha=decay, adjust=False)
+            .mean()
+        )
+
+        season_team["HistTotalPerformance"] = (
+            season_team.groupby("Team")["TotalPostPerformance"]
+            .shift(1)
+            .reset_index(drop=True)
+            .fillna(0)
+            .ewm(alpha=decay, adjust=False)
+            .mean()
         )
 
         df = df.merge(
-            season_team[["Season", "Team", "HistTeamStrength"]],
+            season_team[
+                [
+                    "Season",
+                    "Team",
+                    "HistSuperiority",
+                    "HistRankPerformance",
+                    "HistPointPerformance",
+                    "HistTotalPerformance",
+                ]
+            ],
             on=["Season", "Team"],
             how="inner",
         )
-
-        # df["HistPerformance"] =
-        # df["HistWinLossRate"] =
 
         return df
 
@@ -284,13 +336,14 @@ def create_features(df):
         post_match_results,
         rank,
         zone,
-        team_strength,
+        team_superiority,
         rank_performance,
         point_performance,
-        combined_performance,
+        total_performance,
         win_loss_rate,
         history,
     ]
+
     df = df.sort_values(["Season", "Div", "Date"]).reset_index(drop=True)
     for function in feature_functions:
         df = function(df)
@@ -300,7 +353,18 @@ def create_features(df):
 
 df = edit_df(df)
 df = create_features(df)
-df = df.sort_values(["Season", "Div", "Date"]).reset_index(drop=True)
+df = df.sort_values(["Season", "Team"]).reset_index(drop=True)
 
-print(df.head(72))
-# print(df[df.Team == "St Pauli"].iloc[:20])
+# print(df.head(40))
+print(
+    df[df.Team == "Dortmund"]
+    .groupby("Season", as_index=False)
+    .last()[
+        [
+            "Season",
+            "Team",
+            "PostSuperiority",
+            "HistSuperiority",
+        ]
+    ]
+)
