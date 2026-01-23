@@ -257,10 +257,6 @@ def create_features(df):
         columns = [
             "Season",
             "Team",
-            "GoalsFor",
-            "GoalsAgainst",
-            "TotalGoalsFor",
-            "TotalGoalsAgainst",
             "PostSuperiority",
             "PostRankPerformance",
             "PostPointPerformance",
@@ -278,45 +274,23 @@ def create_features(df):
             season_end, on=["Season", "Team"], how="left"
         ).fillna(0)
 
-        season_team["HistSuperiority"] = (
-            season_team.groupby("Team")["PostSuperiority"]
-            .shift(1)
-            .fillna(0)
-            .groupby(season_team["Team"])
-            .ewm(alpha=decay, adjust=False)
-            .mean()
-            .reset_index(level=0, drop=True)
-        )
+        hist_dict = {
+            "HistSuperiority": "PostSuperiority",
+            "HistRankPerformance": "PostRankPerformance",
+            "HistPointPerformance": "PostPointPerformance",
+            "HistTotalPerformance": "TotalPostPerformance",
+        }
 
-        season_team["HistRankPerformance"] = (
-            season_team.groupby("Team")["PostRankPerformance"]
-            .shift(1)
-            .fillna(0)
-            .groupby(season_team["Team"])
-            .ewm(alpha=decay, adjust=False)
-            .mean()
-            .reset_index(level=0, drop=True)
-        )
-
-        season_team["HistPointPerformance"] = (
-            season_team.groupby("Team")["PostPointPerformance"]
-            .shift(1)
-            .fillna(0)
-            .groupby(season_team["Team"])
-            .ewm(alpha=decay, adjust=False)
-            .mean()
-            .reset_index(level=0, drop=True)
-        )
-
-        season_team["HistTotalPerformance"] = (
-            season_team.groupby("Team")["TotalPostPerformance"]
-            .shift(1)
-            .fillna(0)
-            .groupby(season_team["Team"])
-            .ewm(alpha=decay, adjust=False)
-            .mean()
-            .reset_index(level=0, drop=True)
-        )
+        for hist_col, post_col in hist_dict.items():
+            season_team[hist_col] = (
+                season_team.groupby("Team")[post_col]
+                .shift(1)
+                .fillna(0)
+                .groupby(season_team["Team"])
+                .ewm(alpha=decay, adjust=False)
+                .mean()
+                .reset_index(level=0, drop=True)
+            )
 
         df = df.merge(
             season_team[
@@ -361,7 +335,7 @@ df = df.sort_values(["Season", "Team"]).reset_index(drop=True)
 
 # print(df.head(40))
 print(
-    df[df.Team == "Dortmund"]
+    df[(df.Team == "Bayern Munich")]
     .groupby("Season", as_index=False)
     .last()[
         [
@@ -371,4 +345,6 @@ print(
             "HistSuperiority",
         ]
     ]
+    .sort_values("Season")
+    .reset_index(drop=True)
 )
