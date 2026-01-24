@@ -225,7 +225,7 @@ def create_features(df):
         return df
 
     def total_performance(df):
-        df["TotalPriorPerformance"] = (
+        df["PostTotalPerformance"] = (
             df["PriorRankPerformance"] + df["PriorPointPerformance"]
         ) / 2
         df["TotalPostPerformance"] = (
@@ -260,7 +260,7 @@ def create_features(df):
             "PostSuperiority",
             "PostRankPerformance",
             "PostPointPerformance",
-            "TotalPostPerformance",
+            "PostTotalPerformance",
         ]
         # create calender to log all team results for all seasons
         seasons = df["Season"].drop_duplicates()
@@ -278,7 +278,7 @@ def create_features(df):
             "HistSuperiority": "PostSuperiority",
             "HistRankPerformance": "PostRankPerformance",
             "HistPointPerformance": "PostPointPerformance",
-            "HistTotalPerformance": "TotalPostPerformance",
+            "HistTotalPerformance": "PostTotalPerformance",
         }
 
         for hist_col, post_col in hist_dict.items():
@@ -341,8 +341,8 @@ print(
         [
             "Season",
             "Team",
-            "PostSuperiority",
-            "HistSuperiority",
+            "PostTotalPerformance",
+            "HistTotalPerformance",
         ]
     ]
     .sort_values("Season")
