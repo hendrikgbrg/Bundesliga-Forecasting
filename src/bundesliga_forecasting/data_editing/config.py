@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List
 
 # =========================
-#  Configs (experimentell)
+#  Feature Parameters
 # =========================
 
 
@@ -20,28 +20,11 @@ class ZoneConfig:
 
 
 # ===================
-#  Dataset constants
+#  Ranking Logic
 # ===================
-
-SEASON_START_MONTH = 7
-MATCHES_PER_SEASON = 34
 
 RANK_SCORE_WEIGHTS = {
     "points": 1e6,
     "goals_diff": 1e3,
     "total_goals_for": 1,
 }
-
-HOME_COLS = ["Season", "Div", "Date", "HomeTeam", "AwayTeam", "HomeGoals", "AwayGoals"]
-
-AWAY_COLS = ["Season", "Div", "Date", "AwayTeam", "HomeTeam", "AwayGoals", "HomeGoals"]
-
-TEAM_MATCH_COLS = [
-    "Season",
-    "Div",
-    "Date",
-    "Team",
-    "Opponent",
-    "GoalsFor",
-    "GoalsAgainst",
-]

@@ -4,21 +4,26 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
+from bundesliga_forecasting.data_creation import config
+
+COLUMNS = config.COLUMNS
+
+
 # ----------
-#  Cleaning
+#  clean.py
 # ----------
 
 
 def extract_columns(
     lines: list[str],
-    col_names: list[str],
+    col_names: list[str] = COLUMNS.raw,
 ) -> list[str]:
     """
     Description:
         1st -
 
     Usage location:
-        data_creation/io/clean_csv_directory.py
+        data_creation/io/clean.py
 
     Args:
         df (pd.DataFrame): _description_
@@ -29,6 +34,11 @@ def extract_columns(
     Returns:
         pd.DataFrame: _description_
     """
+
+    if len(lines) == 0:
+        raise ValueError(
+            "List object 'lines' is empty. No columns have been extracted."
+        )
     header = lines[0].strip().split(",")
 
     try:
@@ -50,13 +60,15 @@ def extract_columns(
 
 
 def adjust_team_names(
-    df: pd.DataFrame, col_names: list[str], rename_map: dict[str, str]
+    df: pd.DataFrame,
+    team_cols: list[str] = COLUMNS.teams,
+    rename_teams: dict[str, str] = config.RENAME_MAP,
 ) -> pd.DataFrame:
     """
     Description:
 
     Usage location:
-        data_creation/io/clean_csv_directory.py
+        data_creation/io/clean.py
 
     Args:
         df (pd.DataFrame): _description_
@@ -66,28 +78,58 @@ def adjust_team_names(
     Returns:
         pd.DataFrame: _description_
     """
-    df[col_names] = df[col_names].apply(lambda col: col.str.strip())
+    df[team_cols] = df[team_cols].apply(lambda col: col.str.strip())
 
-    return df.replace(rename_map)
-
-
-# ---------------
-#  Restructuring
-# ---------------
+    return df.replace(rename_teams)
 
 
-def add_season(
-    df: pd.DataFrame,
-    *,
-    date_col: str = "Date",
-    season_col: str = "Season",
-    season_start: int = 7,
+# ----------
+#  merge.py
+# ----------
+
+
+def sort_matches(
+    df: pd.DataFrame, *, sort_cols: list[str] = COLUMNS.sort_by
 ) -> pd.DataFrame:
     """
     Description:
 
     Usage location:
-        data_creation/pipeline.py
+        data_creation/prepare.py
+
+    Args:
+        df (pd.DataFrame): _description_
+        sort_cols (list[str]): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    missing = [col for col in sort_cols if col not in df.columns]
+    if missing:
+        raise KeyError(
+            f"The following columns are missing in the given DataFrame: {missing}."
+        )
+
+    return df.sort_values(sort_cols).reset_index(drop=True)
+
+
+# ------------
+#  prepare.py
+# ------------
+
+
+def add_season(
+    df: pd.DataFrame,
+    *,
+    date_col: str = config.DATE_COL,
+    season_col: str = config.SEASON_COL,
+    season_start: int = config.SEASON_START_MONTH,
+) -> pd.DataFrame:
+    """
+    Description:
+
+    Usage location:
+        data_creation/io/prepare.py
 
     Args:
         df (pd.DataFrame): _description_
@@ -125,7 +167,11 @@ def add_season(
 
 
 def team_match_split(
-    df: pd.DataFrame, *, home_cols: list[str], away_cols: list[str], new_cols: list[str]
+    df: pd.DataFrame,
+    *,
+    home_cols: list[str] = COLUMNS.home,
+    away_cols: list[str] = COLUMNS.away,
+    new_cols: list[str] = COLUMNS.team_match,
 ) -> pd.DataFrame:
     """
     Description:
@@ -135,8 +181,8 @@ def team_match_split(
         4th - Insert home and away indicator columns to both data frames
         5th - Concatinate both dataframes into one
 
-    Usage locations:
-        data_creation/pipeline.py
+    Usage location:
+        data_creation/prepare.py
 
     Args:
         df (pd.DataFrame): _description_
@@ -161,26 +207,3 @@ def team_match_split(
     out2.insert(5, "Home", 0)
     out = pd.concat([out1, out2], ignore_index=True)
     return out
-
-
-def sort_matches(df: pd.DataFrame, *, sort_cols: list[str]) -> pd.DataFrame:
-    """
-    Description:
-
-    Usage location:
-        data_creation/pipeline.py
-
-    Args:
-        df (pd.DataFrame): _description_
-        sort_cols (list[str]): _description_
-
-    Returns:
-        pd.DataFrame: _description_
-    """
-    missing = [col for col in sort_cols if col not in df.columns]
-    if missing:
-        raise KeyError(
-            "The following columns are missing in the given DataFrame: {missing}"
-        )
-
-    return df.sort_values(sort_cols).reset_index(drop=True)

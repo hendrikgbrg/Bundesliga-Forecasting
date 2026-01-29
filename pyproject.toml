@@ -15,3 +15,17 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = "src"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+#[project.scripts]
+#bundesliga-create-data = "bundesliga_forecasting.data_creation.pipeline:data_creation"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
