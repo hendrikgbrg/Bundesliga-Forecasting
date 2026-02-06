@@ -1,25 +1,23 @@
 import logging
 from pathlib import Path
-
 import pandas as pd
+from bundesliga_forecasting.project_config import PATHS
+from bundesliga_forecasting.project_utils import ensure_dir, read_csv, save_to_csv
+from bundesliga_forecasting.data_structuring.structure_utils import detect_csv_files
 
-from bundesliga_forecasting.data_creation import config, utils
 
 logger = logging.getLogger(__name__)
-
-PATHS = config.PATHS
-
+paths = PATHS
 
 def merge(
-    src_dir: Path = PATHS.cleaned,
-    target_dir: Path = PATHS.merged,
-    target_file: str = PATHS.m_filename,
+    src_dir: Path = paths.cleaned,
+    target_dir: Path = paths.merged,
+    target_file: str = paths.m_filename,
 ) -> None:
     """
     Description:
         1st - Concatinate all CSV-files onto each other in one data frame
-        2nd - Sort the data frame
-        3rd - Save the data frame to the target directory
+        2nd - SSave the data frame to the target directory
 
     Usage location:
         data_creation/pipeline.py
@@ -28,20 +26,18 @@ def merge(
         src_dir (Path): _description_
         target_dir (Path): _description_
         col_names (list[str]): _description_
-        sort_cols (list[str]): _description_
     """
 
     logger.info("Starting file merging...")
 
-    utils.ensure_dir([src_dir, target_dir], ["src", "target"])
+    ensure_dir([src_dir, target_dir], ["src", "target"])
 
     output_path = target_dir / target_file
 
-    csv_files = utils.detect_csv_files(src_dir)
+    csv_files = detect_csv_files(src_dir)
 
-    df = pd.concat((pd.read_csv(file) for file in csv_files), ignore_index=True)
-    # df = sort_matches(df)
-    df.to_csv(output_path, index=False)
+    df = pd.concat((read_csv(file) for file in csv_files), ignore_index=True)
+    save_to_csv(df, output_path)
 
     logger.info(
         f"{len(csv_files)} files merged successfully and saved in {output_path}."

@@ -3,9 +3,10 @@ name = "bundesliga-forecasting"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "pandas>=3.0.0",
+    "numpy>=1.25.0",
 ]
 
 [dependency-groups]
@@ -28,4 +29,3 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

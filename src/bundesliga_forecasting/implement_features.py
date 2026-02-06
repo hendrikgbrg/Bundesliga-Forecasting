@@ -5,7 +5,7 @@ import pandas as pd
 
 base_dir = Path(__file__).resolve().parent
 src_dir = (base_dir / "../../data/04_Merged").resolve()
-target_dir = (base_dir / "../../data/05_Features").resolve()
+target_dir = (base_dir / "../../data/06_Test").resolve()
 target_dir.mkdir(parents=True, exist_ok=True)
 
 file_path = src_dir / "data.csv"
@@ -79,7 +79,7 @@ def create_features(df):
         df["TotalGoalDiff"] = df["TotalGoalsFor"] - df["TotalGoalsAgainst"]
 
         return df
-
+    
     def rank(df):
         # create calender to log all team results for all dates
         dates = df[["Season", "Div", "Date"]].drop_duplicates()
@@ -112,41 +112,41 @@ def create_features(df):
         df["TotalGoalsAgainst"] = df["TotalGoalsAgainst"] - df["GoalsAgainst"]
 
         # add prior columns to the snap frame to adjust for a priori results, effectively using only non-zero game specific entries
-        snap["PriorTotalPoints"] = snap["TotalPoints"] - snap["Points"]
-        snap["PriorTotalGoalDiff"] = (
+        snap["PreTotalPoints"] = snap["TotalPoints"] - snap["Points"]
+        snap["PreTotalGoalDiff"] = (
             snap["TotalGoalDiff"] - snap["GoalsFor"] + snap["GoalsAgainst"]
         )
-        snap["PriorTotalGoalsFor"] = snap["TotalGoalsFor"] - snap["GoalsFor"]
+        snap["PreTotalGoalsFor"] = snap["TotalGoalsFor"] - snap["GoalsFor"]
 
         # use prior and post columns of the snap view to calculate the ranks before and after every game
-        snap["PriorScore"] = (
-            snap["PriorTotalPoints"] * 1e6
-            + snap["PriorTotalGoalDiff"] * 1e3
-            + snap["PriorTotalGoalsFor"]
+        snap["PreScore"] = (
+            snap["PreTotalPoints"] * 1e6
+            + snap["PreTotalGoalDiff"] * 1e3
+            + snap["PreTotalGoalsFor"]
         )
         snap["PostScore"] = (
             snap["TotalPoints"] * 1e6
             + snap["TotalGoalDiff"] * 1e3
             + snap["TotalGoalsFor"]
         )
-        snap["PriorRank"] = snap.groupby(["Season", "Div", "Date"])["PriorScore"].rank(
+        snap["PreRank"] = snap.groupby(["Season", "Div", "Date"])["PreScore"].rank(
             method="dense", ascending=False
         )
         snap["PostRank"] = snap.groupby(["Season", "Div", "Date"])["PostScore"].rank(
             method="dense", ascending=False
         )
 
-        snap = snap.drop(columns=["PriorScore"])
+        snap = snap.drop(columns=["PreScore"])
         snap = snap.drop(columns=["PostScore"])
 
-        snap["LowestPriorRank"] = snap.groupby(["Season", "Div", "Date"])[
-            "PriorRank"
+        snap["LowestPreRank"] = snap.groupby(["Season", "Div", "Date"])[
+            "PreRank"
         ].transform("max")
-        snap["MinPriorPoints"] = snap.groupby(["Season", "Div", "Date"])[
-            "PriorTotalPoints"
+        snap["MinPrePoints"] = snap.groupby(["Season", "Div", "Date"])[
+            "PreTotalPoints"
         ].transform("min")
-        snap["MaxPriorPoints"] = snap.groupby(["Season", "Div", "Date"])[
-            "PriorTotalPoints"
+        snap["MaxPrePoints"] = snap.groupby(["Season", "Div", "Date"])[
+            "PreTotalPoints"
         ].transform("max")
         snap["LowestPostRank"] = snap.groupby(["Season", "Div", "Date"])[
             "PostRank"
@@ -166,12 +166,12 @@ def create_features(df):
                     "Div",
                     "Date",
                     "Team",
-                    "PriorRank",
+                    "PreRank",
                     "PostRank",
-                    "LowestPriorRank",
+                    "LowestPreRank",
                     "LowestPostRank",
-                    "MinPriorPoints",
-                    "MaxPriorPoints",
+                    "MinPrePoints",
+                    "MaxPrePoints",
                     "MinPostPoints",
                     "MaxPostPoints",
                 ]
@@ -187,15 +187,15 @@ def create_features(df):
         labels = [1, 0.5, 0, -0.5, -1]
 
         df["Zone"] = pd.cut(
-            df["PriorRank"], bins=bins, labels=labels, right=True, include_lowest=True
+            df["PreRank"], bins=bins, labels=labels, right=True, include_lowest=True
         )
         return df
 
     def team_superiority(df):
-        prior_games = df.groupby(["Season", "Team"]).cumcount().replace(0, 1)
-        df["PriorSuperiority"] = (
+        pre_games = df.groupby(["Season", "Team"]).cumcount().replace(0, 1)
+        df["PreSuperiority"] = (
             df["TotalGoalsFor"] - df["TotalGoalsAgainst"]
-        ) / prior_games
+        ) / pre_games
         df["PostSuperiority"] = (
             df["TotalGoalsFor"]
             + df["GoalsFor"]
@@ -203,10 +203,10 @@ def create_features(df):
             - df["GoalsAgainst"]
         ) / 34
         return df
-
+    
     def rank_performance(df):
-        df["PriorRankPerformance"] = 1 - 2 * (
-            (df["PriorRank"] - 1) / np.maximum(df["LowestPriorRank"] - 1, 1)
+        df["PreRankPerformance"] = 1 - 2 * (
+            (df["PreRank"] - 1) / np.maximum(df["LowestPreRank"] - 1, 1)
         )
         df["PostRankPerformance"] = 1 - 2 * (
             (df["PostRank"] - 1) / np.maximum(df["LowestPostRank"] - 1, 1)
@@ -214,9 +214,9 @@ def create_features(df):
         return df
 
     def point_performance(df):
-        df["PriorPointPerformance"] = 1 - 2 * (
-            (df["MaxPriorPoints"] - df["TotalPoints"])
-            / np.maximum(df["MaxPriorPoints"] - df["MinPriorPoints"], 1)
+        df["PrePointPerformance"] = 1 - 2 * (
+            (df["MaxPrePoints"] - df["TotalPoints"])
+            / np.maximum(df["MaxPrePoints"] - df["MinPrePoints"], 1)
         )
         df["PostPointPerformance"] = 1 - 2 * (
             (df["MaxPostPoints"] - df["TotalPoints"] - df["Points"])
@@ -226,7 +226,7 @@ def create_features(df):
 
     def total_performance(df):
         df["PostTotalPerformance"] = (
-            df["PriorRankPerformance"] + df["PriorPointPerformance"]
+            df["PreRankPerformance"] + df["PrePointPerformance"]
         ) / 2
         df["TotalPostPerformance"] = (
             df["PostRankPerformance"] + df["PostPointPerformance"]
@@ -252,6 +252,9 @@ def create_features(df):
             df.groupby(["Season", "Team"])["WinLossRate"].shift(1).fillna(0)
         )
         return df
+
+
+
 
     def history(df):
         columns = [

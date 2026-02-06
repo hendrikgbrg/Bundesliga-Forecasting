@@ -29,7 +29,7 @@
     "explorer.confirmDragAndDrop": true,
     // Workbench settings
     "workbench.colorTheme": "Default Dark+",
-    "workbench.editor.enablePreview": false,
+    "workbench.editor.enablepriorview": false,
     "workbench.editor.tabSizing": "shrink",
     "workbench.settings.editor": "json",
     "workbench.sideBar.location": "right",
@@ -57,8 +57,8 @@
     "terminal.integrated.tabs.hideCondition": "never",
     "terminal.integrated.tabs.location": "right",
     // Markdown settings
-    "markdown.preview.scrollEditorWithPreview": true,
-    "markdown.preview.scrollPreviewWithEditor": true,
+    "markdown.priorview.scrollEditorWithpriorview": true,
+    "markdown.priorview.scrollpriorviewWithEditor": true,
     // Color theme settings
     "workbench.colorCustomizations": {
         // Status bar

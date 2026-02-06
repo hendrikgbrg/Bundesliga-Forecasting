@@ -4,26 +4,47 @@ import logging
 from pathlib import Path
 from typing import Literal
 
+import pandas as pd
+
+from bundesliga_forecasting.project_config import CSV_ENCODING, DATE_COL
+
 logger = logging.getLogger(__name__)
 
 
+def read_csv(
+    input_path: Path,
+    *,
+    parse_dates: list[str] = [DATE_COL],
+    dayfirst: bool = True,
+    encoding: str = CSV_ENCODING,
+) -> pd.DataFrame:
+    df = pd.read_csv(
+        input_path, parse_dates=parse_dates, dayfirst=dayfirst, encoding=encoding
+    )
+    return df
+
+
+def save_to_csv(df: pd.DataFrame, output_path: Path, *, index: bool = False) -> None:
+    df.to_csv(output_path, index=index)
+
+
+def check_columns(df: pd.DataFrame, columns: list[str]) -> None:
+    missing = [col for col in columns if col not in df.columns]
+    if missing:
+        raise KeyError(
+            f"The following columns are missing in the DataFrame: {missing}."
+        )
+
+
+def df_sort(
+    df: pd.DataFrame, *, sort_cols: list[str], kind: str = "mergesort"
+) -> pd.DataFrame:
+    check_columns(df, sort_cols)
+    df = df.sort_values(sort_cols, kind=kind)
+    return df
+
+
 def ensure_dir(paths: list[Path], dir_types: list[Literal["src", "target"]]) -> None:
-    """
-    Description:
-
-    Usage location:
-        data_creation/io/clean.py
-        data_creation/io/merge.py
-        data_creation/io/prepare.py
-
-    Args:
-        paths (list[Path]): _description_
-        dir_types (list[Literal[&quot;src&quot;, &quot;target&quot;]]): _description_
-
-    Raises:
-        ValueError: _description_
-        FileNotFoundError: _description_
-    """
     if len(paths) != len(dir_types):
         raise ValueError(
             "The list objects 'paths' and 'dir_types' have to be of the same length."
@@ -43,31 +64,3 @@ def ensure_dir(paths: list[Path], dir_types: list[Literal["src", "target"]]) -> 
                     raise FileNotFoundError("Source directory is empty.")
                 else:
                     logger.info(f"Reading file data from {path} ...")
-
-
-def detect_csv_files(path: Path) -> list:
-    """
-    Description:
-
-    Usage location:
-        data_creation/io/clean.py
-        data_creation/io/merge.py
-        data_creation/io/prepare.py
-
-    Args:
-        path (Path): _description_
-
-    Raises:
-        ValueError: _description_
-
-    Returns:
-        list: _description_
-    """
-    csv_files = [
-        file
-        for file in path.iterdir()
-        if file.is_file() and file.suffix.lower() == ".csv"
-    ]
-    if len(csv_files) == 0:
-        raise FileNotFoundError(f"No CSV-files found in {path}.")
-    return csv_files
