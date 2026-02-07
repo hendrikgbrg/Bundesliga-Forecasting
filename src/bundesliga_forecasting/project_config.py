@@ -48,6 +48,6 @@ PATHS = Paths()
 def setup_logging(level: int = logging.INFO) -> None:
     logging.basicConfig(
         level=level,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+        format="\n%(asctime)s | %(levelname)s | %(name)s | %(message)s\n",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

@@ -43,6 +43,7 @@ def add_performance_features(
     Returns:
         pd.DataFrame: _description_
     """
+    logger.info("Adding performance-features to the DataFrame...")
     ensure_dir([src_dir, target_dir], ["src", "target"])
 
     input_path = src_dir / src_file
@@ -65,7 +66,9 @@ def add_performance_features(
 
 
 def _add_zones(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Creating table zones...")
     check_columns(df, [cols.pre_rank])
+
     df[cols.zone] = pd.cut(
         df[cols.pre_rank],
         bins=ZONES.bins,
@@ -77,6 +80,7 @@ def _add_zones(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _total_rank_performance(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Calculating seasonal total rank performance...")
     check_columns(df, [cols.pre_trank, cols.post_trank])
 
     df[cols.pre_trank_performance] = 1 - 2 * ((df[cols.pre_trank] - 1) / 35)
@@ -85,6 +89,19 @@ def _total_rank_performance(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _total_point_performance(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Calculating seasonal total point performance...")
+    check_columns(
+        df,
+        [
+            cols.pre_max_tpoints,
+            cols.pre_min_tpoints,
+            cols.pre_tpoints,
+            cols.post_max_tpoints,
+            cols.post_min_tpoints,
+            cols.post_tpoints,
+        ],
+    )
+
     df[cols.pre_tpoint_performance] = 1 - 2 * (
         (df[cols.pre_max_tpoints] - df[cols.pre_tpoints])
         / np.maximum(df[cols.pre_max_tpoints] - df[cols.pre_min_tpoints], 1)
@@ -107,6 +124,9 @@ def _total_point_performance(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _rolling_win_loss_rate(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Calculating rolling win-loss-rate...")
+    check_columns(df, [cols.season, cols.team, cols.points])
+
     wins = (df[cols.points] == 3).astype(int)
     draws = (df[cols.points] == 1).astype(int)
     losses = (df[cols.points] == 0).astype(int)
@@ -162,6 +182,9 @@ def _rolling_win_loss_rate(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _ewma_superiority(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Calculating seasonally weighted superiority...")
+    check_columns(df, [cols.season, cols.team, cols.goaldiff])
+
     df[cols.pre_goaldiff] = df[cols.goaldiff].shift(1, fill_value=0)
     df[cols.pre_superiority] = (
         df.groupby([cols.season, cols.team], sort=False)[cols.pre_goaldiff]

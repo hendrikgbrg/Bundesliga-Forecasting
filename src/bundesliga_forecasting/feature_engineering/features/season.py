@@ -80,6 +80,7 @@ def _create_calendar(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: _description_
     """
     logger.info("Creating the season team-date calendar...")
+    check_columns(df, [cols.season, cols.div, cols.date, cols.team])
     dates_df = df[[cols.season, cols.div, cols.date]].drop_duplicates()
     teams_df = df[[cols.season, cols.div, cols.team]].drop_duplicates()
     calendar = dates_df.merge(teams_df, on=[cols.div, cols.season], how="inner")
@@ -101,7 +102,7 @@ def _create_season_snap(df: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFram
     Returns:
         pd.DataFrame: _description_
     """
-    logger.info("Creating season snap...")
+    logger.info("Creating the season snap from the season team-date calendar...")
     check_columns(
         df, [cols.season, cols.div, cols.date, cols.team] + MATCH_COLS + RANK_COLS
     )
@@ -136,7 +137,9 @@ def _rank_by_sort_group(
     Returns:
         pd.DataFrame: _description_
     """
-    logger.info("Applying rank function...")
+    check_columns(
+        season_snap, [cols.season, cols.team] + sort_cols + MATCH_COLS + RANK_COLS
+    )
     season_snap = season_snap.sort_values(
         by=sort_cols, ascending=ascending, kind="mergesort"
     )
@@ -145,11 +148,11 @@ def _rank_by_sort_group(
         RANK_COLS
     ].ffill()
 
-    season_snap[MATCH_COLS + RANK_COLS].fillna(0, inplace=True)
+    season_snap[MATCH_COLS + RANK_COLS] = season_snap[MATCH_COLS + RANK_COLS].fillna(0)
 
     season_snap[out_col] = season_snap.groupby(group_cols, sort=False).ngroup().add(1)
 
-    season_snap.reset_index(drop=True, inplace=True)
+    season_snap = season_snap.reset_index(drop=True)
 
     return season_snap
 
@@ -167,8 +170,13 @@ def _compute_ranks(season_snap: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: _description_
     """
-    logger.info("Computing ranks by sorting and grouping...")
-
+    logger.info("Calculating ranks by sorting and grouping in the season-snap...")
+    check_columns(
+        season_snap,
+        [cols.season, cols.div, cols.date, cols.pre_rank]
+        + PRIOR_RANK_COLS
+        + POST_RANK_COLS,
+    )
     # prior-match ranks
     season_snap = _rank_by_sort_group(
         season_snap,
@@ -212,7 +220,10 @@ def _add_table_extrema(season_snap: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: _description_
     """
-    logger.info("Adding total point extreme values to the table...")
+    logger.info("Adding total point extreme values to the season-snap...")
+    check_columns(
+        season_snap, [cols.div, cols.date, cols.pre_tpoints, cols.post_tpoints]
+    )
     # prior-match max points
     season_snap[cols.pre_max_tpoints] = season_snap.groupby([cols.div, cols.date])[
         cols.pre_tpoints
@@ -250,24 +261,27 @@ def _merge_back(df: pd.DataFrame, season_snap: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: _description_
     """
-    logger.info("Merging season snap back into original DataFrane...")
+    logger.info("Merging season snap back into original DataFrame...")
+    merge_columns = [
+        cols.season,
+        cols.date,
+        cols.team,
+        cols.pre_min_tpoints,
+        cols.pre_max_tpoints,
+        cols.pre_rank,
+        cols.pre_trank,
+        cols.post_min_tpoints,
+        cols.post_max_tpoints,
+        cols.post_rank,
+        cols.post_trank,
+    ]
+    on_columns = [cols.season, cols.date, cols.team]
+    check_columns(season_snap, merge_columns)
+    check_columns(df, on_columns)
+
     df = df.merge(
-        season_snap[
-            [
-                cols.season,
-                cols.date,
-                cols.team,
-                cols.pre_min_tpoints,
-                cols.pre_max_tpoints,
-                cols.pre_rank,
-                cols.pre_trank,
-                cols.post_min_tpoints,
-                cols.post_max_tpoints,
-                cols.post_rank,
-                cols.post_trank,
-            ]
-        ],
-        on=[cols.season, cols.date, cols.team],
+        season_snap[merge_columns],
+        on=on_columns,
         how="left",
     )
 

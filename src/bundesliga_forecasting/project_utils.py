@@ -62,5 +62,3 @@ def ensure_dir(paths: list[Path], dir_types: list[Literal["src", "target"]]) -> 
             if dir_type == "src":
                 if not any(path.iterdir()):
                     raise FileNotFoundError("Source directory is empty.")
-                else:
-                    logger.info(f"Reading file data from {path} ...")

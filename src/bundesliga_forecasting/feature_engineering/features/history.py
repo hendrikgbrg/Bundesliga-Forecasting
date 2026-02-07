@@ -29,6 +29,7 @@ def add_historical_features(
     src_file: str = paths.f_filename,
     target_file: str = paths.f_filename,
 ) -> pd.DataFrame:
+    logger.info("Adding historical features to the DataFrame...")
     ensure_dir([src_dir, target_dir], ["src", "target"])
 
     input_path = src_dir / src_file
