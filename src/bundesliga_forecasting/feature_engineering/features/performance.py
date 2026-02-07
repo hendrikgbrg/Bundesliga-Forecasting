@@ -114,21 +114,21 @@ def _rolling_win_loss_rate(df: pd.DataFrame) -> pd.DataFrame:
     pre_wins = (
         wins.groupby([df[cols.season], df[cols.team]], sort=False)
         .shift(1, fill_value=0)
-        .rolling(EWMA_DECAY.rolling)
+        .rolling(EWMA_DECAY.rolling, min_periods=1)
         .sum()
         .reset_index(drop=True)
     )
     pre_draws = (
         draws.groupby([df[cols.season], df[cols.team]], sort=False)
         .shift(1, fill_value=0)
-        .rolling(EWMA_DECAY.rolling)
+        .rolling(EWMA_DECAY.rolling, min_periods=1)
         .sum()
         .reset_index(drop=True)
     )
     pre_losses = (
         losses.groupby([df[cols.season], df[cols.team]], sort=False)
         .shift(1, fill_value=0)
-        .rolling(EWMA_DECAY.rolling)
+        .rolling(EWMA_DECAY.rolling, min_periods=1)
         .sum()
         .clip(lower=1)
         .reset_index(drop=True)
@@ -136,19 +136,19 @@ def _rolling_win_loss_rate(df: pd.DataFrame) -> pd.DataFrame:
 
     post_wins = (
         wins.groupby([df[cols.season], df[cols.team]], sort=False)
-        .rolling(EWMA_DECAY.rolling)
+        .rolling(EWMA_DECAY.rolling, min_periods=1)
         .sum()
         .reset_index(drop=True)
     )
     post_draws = (
         draws.groupby([df[cols.season], df[cols.team]], sort=False)
-        .rolling(EWMA_DECAY.rolling)
+        .rolling(EWMA_DECAY.rolling, min_periods=1)
         .sum()
         .reset_index(drop=True)
     )
     post_losses = (
         losses.groupby([df[cols.season], df[cols.team]], sort=False)
-        .rolling(EWMA_DECAY.rolling)
+        .rolling(EWMA_DECAY.rolling, min_periods=1)
         .sum()
         .clip(lower=1)
         .reset_index(drop=True)
