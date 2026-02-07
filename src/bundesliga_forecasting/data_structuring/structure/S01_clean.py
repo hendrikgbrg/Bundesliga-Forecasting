@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from __future__ import annotations
+
 import pandas as pd
-from bundesliga_forecasting.project_config import PATHS, CSV_ENCODING
-from bundesliga_forecasting.project_utils import ensure_dir, save_to_csv
-from bundesliga_forecasting.data_structuring.structure_config import COLUMNS, RENAME_MAP
-from bundesliga_forecasting.data_structuring.structure_utils import detect_csv_files
+
+from bundesliga_forecasting.BL_config import CSV_ENCODING, PATHS
+from bundesliga_forecasting.BL_utils import ensure_dir, save_to_csv
+from bundesliga_forecasting.data_structuring.S_config import COLUMNS, RENAME_MAP
+from bundesliga_forecasting.data_structuring.S_utils import detect_csv_files
 
 logger = logging.getLogger(__name__)
 

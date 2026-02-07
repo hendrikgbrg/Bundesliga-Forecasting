@@ -4,18 +4,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from bundesliga_forecasting.feature_engineering.feature_config import (
-    COLUMNS,
-    MATCH_COLS,
-    POST_RANK_COLS,
-    PRIOR_RANK_COLS,
-)
-from bundesliga_forecasting.project_config import CSV_ENCODING, PATHS
-from bundesliga_forecasting.project_utils import (
+from bundesliga_forecasting.BL_config import CSV_ENCODING, PATHS
+from bundesliga_forecasting.BL_utils import (
     check_columns,
     ensure_dir,
     read_csv,
     save_to_csv,
+)
+from bundesliga_forecasting.feature_engineering.F_config import (
+    COLUMNS,
+    MATCH_COLS,
+    POST_RANK_COLS,
+    PRIOR_RANK_COLS,
 )
 
 logger = logging.getLogger(__name__)
@@ -220,7 +220,7 @@ def _add_table_extrema(season_snap: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: _description_
     """
-    logger.info("Adding total point extreme values to the season-snap...")
+    logger.info("Determining total point extreme values within the season-snap...")
     check_columns(
         season_snap, [cols.div, cols.date, cols.pre_tpoints, cols.post_tpoints]
     )

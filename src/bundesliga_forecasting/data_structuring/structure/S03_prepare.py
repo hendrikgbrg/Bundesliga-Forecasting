@@ -1,12 +1,24 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from __future__ import annotations
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
-from bundesliga_forecasting.project_config import PATHS, DATE_COL
-from bundesliga_forecasting.project_utils import ensure_dir, df_sort, read_csv, save_to_csv
-from bundesliga_forecasting.data_structuring.structure_config import COLUMNS, SEASON_COL, SEASON_START_MONTH
+
+from bundesliga_forecasting.BL_config import DATE_COL, PATHS
+from bundesliga_forecasting.BL_utils import (
+    df_sort,
+    ensure_dir,
+    read_csv,
+    save_to_csv,
+)
+from bundesliga_forecasting.data_structuring.S_config import (
+    COLUMNS,
+    SEASON_COL,
+    SEASON_START_MONTH,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +34,7 @@ def prepare(
 ) -> None:
     """
     Description:
-    
+
     Usage location:
         data_creation/pipeline.py
 
@@ -47,7 +59,9 @@ def prepare(
 
     logger.info("File prepared successfully and saved to %s", output_path)
 
+
 ##############################################################################
+
 
 def _add_season(
     df: pd.DataFrame,

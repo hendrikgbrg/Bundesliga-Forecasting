@@ -1,8 +1,9 @@
 import logging
-from bundesliga_forecasting.project_config import setup_logging
-from bundesliga_forecasting.data_structuring.structure.clean import clean
-from bundesliga_forecasting.data_structuring.structure.merge import merge
-from bundesliga_forecasting.data_structuring.structure.prepare import prepare
+
+from bundesliga_forecasting.BL_config import setup_logging
+from bundesliga_forecasting.data_structuring.structure.S01_clean import clean
+from bundesliga_forecasting.data_structuring.structure.S02_merge import merge
+from bundesliga_forecasting.data_structuring.structure.S03_prepare import prepare
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ def data_structuring() -> None:
     prepare()
 
     logger.info("Data structuring pipeline finished successfully.")
-    
+
 
 def main() -> None:
     data_structuring()

@@ -6,7 +6,7 @@ from typing import Literal
 
 import pandas as pd
 
-from bundesliga_forecasting.project_config import CSV_ENCODING, DATE_COL
+from bundesliga_forecasting.BL_config import CSV_ENCODING, DATE_COL
 
 logger = logging.getLogger(__name__)
 

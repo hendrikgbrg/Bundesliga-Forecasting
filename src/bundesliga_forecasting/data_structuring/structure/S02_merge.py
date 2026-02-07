@@ -1,13 +1,15 @@
 import logging
 from pathlib import Path
-import pandas as pd
-from bundesliga_forecasting.project_config import PATHS
-from bundesliga_forecasting.project_utils import ensure_dir, read_csv, save_to_csv
-from bundesliga_forecasting.data_structuring.structure_utils import detect_csv_files
 
+import pandas as pd
+
+from bundesliga_forecasting.BL_config import PATHS
+from bundesliga_forecasting.BL_utils import ensure_dir, read_csv, save_to_csv
+from bundesliga_forecasting.data_structuring.S_utils import detect_csv_files
 
 logger = logging.getLogger(__name__)
 paths = PATHS
+
 
 def merge(
     src_dir: Path = paths.cleaned,
