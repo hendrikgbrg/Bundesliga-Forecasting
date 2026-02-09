@@ -54,10 +54,10 @@ def add_score_features(
     df = _add_post_tgoalsa(df)
     df = _add_post_tgoaldiff(df)
     df = _add_post_tpoints(df)
-    df = _add_pre_tgoalsf(df)
-    df = _add_pre_tgoalsa(df)
-    df = _add_pre_tgoaldiff(df)
-    df = _add_pre_tpoints(df)
+    df = _add_prev_tgoalsf(df)
+    df = _add_prev_tgoalsa(df)
+    df = _add_prev_tgoaldiff(df)
+    df = _add_prev_tpoints(df)
 
     save_to_csv(df, output_path)
     return df
@@ -109,25 +109,25 @@ def _add_post_tpoints(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # prior match total score
-def _add_pre_tgoalsf(df: pd.DataFrame) -> pd.DataFrame:
+def _add_prev_tgoalsf(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Cumulating total pre-match goals scored for...")
-    df[cols.pre_tgoalsf] = df[cols.post_tgoalsf] - df[cols.goalsf]
+    df[cols.prev_tgoalsf] = df[cols.post_tgoalsf] - df[cols.goalsf]
     return df
 
 
-def _add_pre_tgoalsa(df: pd.DataFrame) -> pd.DataFrame:
+def _add_prev_tgoalsa(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Cumulating total pre-match goals scored against...")
-    df[cols.pre_tgoalsa] = df[cols.post_tgoalsa] - df[cols.goalsa]
+    df[cols.prev_tgoalsa] = df[cols.post_tgoalsa] - df[cols.goalsa]
     return df
 
 
-def _add_pre_tgoaldiff(df: pd.DataFrame) -> pd.DataFrame:
+def _add_prev_tgoaldiff(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Cumulating total pre-match goal differences...")
-    df[cols.pre_tgoaldiff] = df[cols.post_tgoaldiff] - df[cols.goaldiff]
+    df[cols.prev_tgoaldiff] = df[cols.post_tgoaldiff] - df[cols.goaldiff]
     return df
 
 
-def _add_pre_tpoints(df: pd.DataFrame) -> pd.DataFrame:
+def _add_prev_tpoints(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Cumulating total pre-match points...")
-    df[cols.pre_tpoints] = df[cols.post_tpoints] - df[cols.points]
+    df[cols.prev_tpoints] = df[cols.post_tpoints] - df[cols.points]
     return df

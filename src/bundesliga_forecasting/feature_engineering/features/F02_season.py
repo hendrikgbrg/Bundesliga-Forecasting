@@ -15,7 +15,7 @@ from bundesliga_forecasting.feature_engineering.F_config import (
     COLUMNS,
     MATCH_COLS,
     POST_RANK_COLS,
-    PRIOR_RANK_COLS,
+    prev_RANK_COLS,
 )
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 paths = PATHS
 encoding = CSV_ENCODING
 cols = COLUMNS
-RANK_COLS = PRIOR_RANK_COLS + POST_RANK_COLS
+RANK_COLS = prev_RANK_COLS + POST_RANK_COLS
 
 
 def add_season_features(
@@ -81,9 +81,13 @@ def _create_calendar(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("Creating the season team-date calendar...")
     check_columns(df, [cols.season, cols.div, cols.date, cols.team])
-    dates_df = df[[cols.season, cols.div, cols.date]].drop_duplicates()
-    teams_df = df[[cols.season, cols.div, cols.team]].drop_duplicates()
-    calendar = dates_df.merge(teams_df, on=[cols.div, cols.season], how="inner")
+    dates_df = (
+        df[[cols.season, cols.div, cols.date]].drop_duplicates().reset_index(drop=True)
+    )
+    teams_df = (
+        df[[cols.season, cols.div, cols.team]].drop_duplicates().reset_index(drop=True)
+    )
+    calendar = dates_df.merge(teams_df, on=[cols.season, cols.div], how="inner")
 
     return calendar
 
@@ -116,10 +120,10 @@ def _create_season_snap(df: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFram
 
 def _rank_by_sort_group(
     season_snap: pd.DataFrame,
-    sort_cols: list[str],
-    group_cols: list[str],
-    ascending: list[bool],
+    rank_cols: list[str],
     out_col: str,
+    group_cols: list[str] = [cols.season, cols.div, cols.date],
+    ascending: list[bool] = [True, True, True, False, False, False],
 ) -> pd.DataFrame:
     """
     Description:
@@ -138,19 +142,27 @@ def _rank_by_sort_group(
         pd.DataFrame: _description_
     """
     check_columns(
-        season_snap, [cols.season, cols.team] + sort_cols + MATCH_COLS + RANK_COLS
-    )
-    season_snap = season_snap.sort_values(
-        by=sort_cols, ascending=ascending, kind="mergesort"
+        season_snap,
+        [cols.season, cols.div, cols.date, cols.team] + MATCH_COLS + RANK_COLS,
     )
 
-    season_snap[RANK_COLS] = season_snap.groupby([cols.season, cols.team])[
+    sort_cols = [cols.season, cols.div, cols.date]
+
+    season_snap = season_snap.sort_values(
+        by=sort_cols, ascending=ascending[:3], kind="mergesort"
+    )
+
+    season_snap[RANK_COLS] = season_snap.groupby([cols.season, cols.team], sort=False)[
         RANK_COLS
     ].ffill()
 
     season_snap[MATCH_COLS + RANK_COLS] = season_snap[MATCH_COLS + RANK_COLS].fillna(0)
 
-    season_snap[out_col] = season_snap.groupby(group_cols, sort=False).ngroup().add(1)
+    season_snap = season_snap.sort_values(
+        by=sort_cols + rank_cols, ascending=ascending, kind="mergesort"
+    )
+
+    season_snap[out_col] = season_snap.groupby(group_cols, sort=False).cumcount().add(1)
 
     season_snap = season_snap.reset_index(drop=True)
 
@@ -173,30 +185,24 @@ def _compute_ranks(season_snap: pd.DataFrame) -> pd.DataFrame:
     logger.info("Calculating ranks by sorting and grouping in the season-snap...")
     check_columns(
         season_snap,
-        [cols.season, cols.div, cols.date, cols.pre_rank]
-        + PRIOR_RANK_COLS
-        + POST_RANK_COLS,
+        [cols.season, cols.div, cols.date] + prev_RANK_COLS + POST_RANK_COLS,
     )
     # prior-match ranks
     season_snap = _rank_by_sort_group(
         season_snap,
-        sort_cols=[cols.season, cols.div, cols.date] + PRIOR_RANK_COLS,
-        group_cols=[cols.season, cols.div, cols.date],
-        ascending=[True, True, True, False, False, False],
-        out_col=cols.pre_rank,
+        rank_cols=prev_RANK_COLS,
+        out_col=cols.prev_rank,
     )
-    season_snap[cols.pre_trank] = np.where(
+    season_snap[cols.prev_trank] = np.where(
         season_snap[cols.div] == "D1",
-        season_snap[cols.pre_rank],
-        season_snap[cols.pre_rank] + 18,
+        season_snap[cols.prev_rank],
+        season_snap[cols.prev_rank] + 18,
     )
 
     # post-match ranks
     season_snap = _rank_by_sort_group(
         season_snap,
-        sort_cols=[cols.season, cols.div, cols.date] + POST_RANK_COLS,
-        group_cols=[cols.season, cols.div, cols.date],
-        ascending=[True, True, True, False, False, False],
+        rank_cols=POST_RANK_COLS,
         out_col=cols.post_rank,
     )
     season_snap[cols.post_trank] = np.where(
@@ -222,16 +228,16 @@ def _add_table_extrema(season_snap: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("Determining total point extreme values within the season-snap...")
     check_columns(
-        season_snap, [cols.div, cols.date, cols.pre_tpoints, cols.post_tpoints]
+        season_snap, [cols.div, cols.date, cols.prev_tpoints, cols.post_tpoints]
     )
     # prior-match max points
-    season_snap[cols.pre_max_tpoints] = season_snap.groupby([cols.div, cols.date])[
-        cols.pre_tpoints
+    season_snap[cols.prev_max_tpoints] = season_snap.groupby([cols.div, cols.date])[
+        cols.prev_tpoints
     ].transform("max")
 
     # prior-match min points
-    season_snap[cols.pre_min_tpoints] = season_snap.groupby([cols.div, cols.date])[
-        cols.pre_tpoints
+    season_snap[cols.prev_min_tpoints] = season_snap.groupby([cols.div, cols.date])[
+        cols.prev_tpoints
     ].transform("min")
 
     # post-match max points
@@ -266,10 +272,10 @@ def _merge_back(df: pd.DataFrame, season_snap: pd.DataFrame) -> pd.DataFrame:
         cols.season,
         cols.date,
         cols.team,
-        cols.pre_min_tpoints,
-        cols.pre_max_tpoints,
-        cols.pre_rank,
-        cols.pre_trank,
+        cols.prev_min_tpoints,
+        cols.prev_max_tpoints,
+        cols.prev_rank,
+        cols.prev_trank,
         cols.post_min_tpoints,
         cols.post_max_tpoints,
         cols.post_rank,
