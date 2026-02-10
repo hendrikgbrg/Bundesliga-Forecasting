@@ -7,13 +7,13 @@ import pandas as pd
 
 from bundesliga_forecasting.BL_config import CSV_ENCODING, PATHS
 from bundesliga_forecasting.BL_utils import ensure_dir, save_to_csv
-from bundesliga_forecasting.data_structuring.S_config import COLUMNS, RENAME_MAP
+from bundesliga_forecasting.data_structuring.S_config import COLUMNLISTS, RENAME_MAP
 from bundesliga_forecasting.data_structuring.S_utils import detect_csv_files
 
 logger = logging.getLogger(__name__)
 
 paths = PATHS
-cols = COLUMNS
+col_lists = COLUMNLISTS
 encoding = CSV_ENCODING
 
 
@@ -54,7 +54,7 @@ def clean(
 
             # Step 2:
             rows = _extract_columns(lines)
-            df = pd.DataFrame(data=rows, columns=cols.raw)
+            df = pd.DataFrame(data=rows, columns=col_lists.raw)
 
             # Step 3:
             df = _adjust_team_names(df)
@@ -69,7 +69,7 @@ def clean(
 
 def _extract_columns(
     lines: list[str],
-    col_names: list[str] = cols.raw,
+    col_names: list[str] = col_lists.raw,
 ) -> list[str]:
     """
     Description:
@@ -114,7 +114,7 @@ def _extract_columns(
 
 def _adjust_team_names(
     df: pd.DataFrame,
-    team_cols: list[str] = cols.team,
+    team_cols: list[str] = col_lists.team,
     rename_teams: dict[str, str] = RENAME_MAP,
 ) -> pd.DataFrame:
     """

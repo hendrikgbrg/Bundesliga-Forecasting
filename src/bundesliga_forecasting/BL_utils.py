@@ -6,21 +6,27 @@ from typing import Literal
 
 import pandas as pd
 
-from bundesliga_forecasting.BL_config import CSV_ENCODING, DATE_COL
+from bundesliga_forecasting.BL_config import COLUMNS, CSV_ENCODING
 
 logger = logging.getLogger(__name__)
+cols = COLUMNS
+SortKind = Literal["quicksort", "mergesort", "heapsort", "stable"]
 
 
 def read_csv(
     input_path: Path,
     *,
-    parse_dates: list[str] = [DATE_COL],
+    parse_dates: list[str] = [cols.date],
     dayfirst: bool = True,
     encoding: str = CSV_ENCODING,
 ) -> pd.DataFrame:
     df = pd.read_csv(
         input_path, parse_dates=parse_dates, dayfirst=dayfirst, encoding=encoding
     )
+    for col in parse_dates:
+        df[col] = pd.to_datetime(
+            df[col], errors="raise", format="mixed", dayfirst=dayfirst
+        )
     return df
 
 
@@ -37,7 +43,7 @@ def check_columns(df: pd.DataFrame, columns: list[str]) -> None:
 
 
 def df_sort(
-    df: pd.DataFrame, *, sort_cols: list[str], kind: str = "mergesort"
+    df: pd.DataFrame, *, sort_cols: list[str], kind: SortKind = "mergesort"
 ) -> pd.DataFrame:
     check_columns(df, sort_cols)
     df = df.sort_values(sort_cols, kind=kind)

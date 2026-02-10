@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from bundesliga_forecasting.BL_config import CSV_ENCODING, PATHS
+from bundesliga_forecasting.BL_config import COLUMNS, CSV_ENCODING, PATHS
 from bundesliga_forecasting.BL_utils import (
     check_columns,
     ensure_dir,
@@ -12,10 +12,9 @@ from bundesliga_forecasting.BL_utils import (
     save_to_csv,
 )
 from bundesliga_forecasting.feature_engineering.F_config import (
-    COLUMNS,
     MATCH_COLS,
     POST_RANK_COLS,
-    prev_RANK_COLS,
+    PREV_RANK_COLS,
 )
 
 logger = logging.getLogger(__name__)
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 paths = PATHS
 encoding = CSV_ENCODING
 cols = COLUMNS
-RANK_COLS = prev_RANK_COLS + POST_RANK_COLS
+RANK_COLS = PREV_RANK_COLS + POST_RANK_COLS
 
 
 def add_season_features(
@@ -185,12 +184,12 @@ def _compute_ranks(season_snap: pd.DataFrame) -> pd.DataFrame:
     logger.info("Calculating ranks by sorting and grouping in the season-snap...")
     check_columns(
         season_snap,
-        [cols.season, cols.div, cols.date] + prev_RANK_COLS + POST_RANK_COLS,
+        [cols.season, cols.div, cols.date] + PREV_RANK_COLS + POST_RANK_COLS,
     )
     # prior-match ranks
     season_snap = _rank_by_sort_group(
         season_snap,
-        rank_cols=prev_RANK_COLS,
+        rank_cols=PREV_RANK_COLS,
         out_col=cols.prev_rank,
     )
     season_snap[cols.prev_trank] = np.where(

@@ -4,14 +4,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from bundesliga_forecasting.BL_config import CSV_ENCODING, PATHS
+from bundesliga_forecasting.BL_config import COLUMNS, CSV_ENCODING, PATHS
 from bundesliga_forecasting.BL_utils import (
     check_columns,
     ensure_dir,
     read_csv,
     save_to_csv,
 )
-from bundesliga_forecasting.feature_engineering.F_config import COLUMNS
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +47,9 @@ def add_score_features(
     df = read_csv(input_path)
     check_columns(df, required_cols)
 
-    df = _add_goaldiff(df)
-    df = _add_points(df)
-    df = _add_post_tgoalsf(df)
-    df = _add_post_tgoalsa(df)
-    df = _add_post_tgoaldiff(df)
-    df = _add_post_tpoints(df)
-    df = _add_prev_tgoalsf(df)
-    df = _add_prev_tgoalsa(df)
-    df = _add_prev_tgoaldiff(df)
-    df = _add_prev_tpoints(df)
+    df = _add_match_scores(df)
+    df = _add_cum_post_match_scores(df)
+    df = _add_cum_prev_match_scores(df)
 
     save_to_csv(df, output_path)
     return df
@@ -67,14 +59,9 @@ def add_score_features(
 
 
 # match score
-def _add_goaldiff(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Calculating goal differences on team-match level...")
+def _add_match_scores(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Calculating scores on team-match level...")
     df[cols.goaldiff] = df[cols.goalsf] - df[cols.goalsa]
-    return df
-
-
-def _add_points(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Calculating points on team-match level...")
     df[cols.points] = np.where(
         df[cols.goaldiff] > 0,
         3,
@@ -84,50 +71,20 @@ def _add_points(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # post match total score
-def _add_post_tgoalsf(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total post-match goals scored for...")
+def _add_cum_post_match_scores(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Cumulating post-match scores on team-match level...")
     df[cols.post_tgoalsf] = df.groupby([cols.season, cols.team])[cols.goalsf].cumsum()
-    return df
-
-
-def _add_post_tgoalsa(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total post-match goals scored gainst...")
     df[cols.post_tgoalsa] = df.groupby([cols.season, cols.team])[cols.goalsa].cumsum()
-    return df
-
-
-def _add_post_tgoaldiff(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total post-match goal differences...")
     df[cols.post_tgoaldiff] = df[cols.post_tgoalsf] - df[cols.post_tgoalsa]
-    return df
-
-
-def _add_post_tpoints(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total post-match points...")
     df[cols.post_tpoints] = df.groupby([cols.season, cols.team])[cols.points].cumsum()
     return df
 
 
 # prior match total score
-def _add_prev_tgoalsf(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total pre-match goals scored for...")
+def _add_cum_prev_match_scores(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Cumulating pre-match scores on team-match level...")
     df[cols.prev_tgoalsf] = df[cols.post_tgoalsf] - df[cols.goalsf]
-    return df
-
-
-def _add_prev_tgoalsa(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total pre-match goals scored against...")
     df[cols.prev_tgoalsa] = df[cols.post_tgoalsa] - df[cols.goalsa]
-    return df
-
-
-def _add_prev_tgoaldiff(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total pre-match goal differences...")
     df[cols.prev_tgoaldiff] = df[cols.post_tgoaldiff] - df[cols.goaldiff]
-    return df
-
-
-def _add_prev_tpoints(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Cumulating total pre-match points...")
     df[cols.prev_tpoints] = df[cols.post_tpoints] - df[cols.points]
     return df

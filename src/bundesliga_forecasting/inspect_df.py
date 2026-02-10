@@ -8,16 +8,18 @@ cols = COLUMNS
 df = read_csv(paths.features / paths.f_filename)
 
 
-show_df = df[(df.Team == "Bayern Munich")][
+show_df = df.loc[
+    (df[cols.team] == "Bayern Munich"),
     [
         cols.season,
         cols.date,
         cols.team,
         cols.opp,
-        cols.goaldiff,
-        cols.prev_win_loss_ratio,
+        cols.prev_trank_performance,
+        cols.prev_tpoint_performance,
+        cols.prev_goal_superiority,
         cols.prev_win_ratio,
-    ]
-].reset_index(drop=True)
+    ],
+]
 
 print(show_df.head(10))

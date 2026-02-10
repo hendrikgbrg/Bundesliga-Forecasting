@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
 
-from bundesliga_forecasting.BL_config import DATE_COL, PATHS
+from bundesliga_forecasting.BL_config import COLUMNS, PATHS
 from bundesliga_forecasting.BL_utils import (
     df_sort,
     ensure_dir,
@@ -15,14 +15,14 @@ from bundesliga_forecasting.BL_utils import (
     save_to_csv,
 )
 from bundesliga_forecasting.data_structuring.S_config import (
-    COLUMNS,
-    SEASON_COL,
+    COLUMNLISTS,
     SEASON_START_MONTH,
 )
 
 logger = logging.getLogger(__name__)
 
 paths = PATHS
+col_lists = COLUMNLISTS
 cols = COLUMNS
 
 
@@ -52,8 +52,9 @@ def prepare(
 
     df = read_csv(input_path)
     df = _add_season(df)
+    df = _division_indicator(df)
     df = _team_match_split(df)
-    df = df_sort(df, sort_cols=cols.sort_by)
+    df = df_sort(df, sort_cols=col_lists.sort_by)
 
     save_to_csv(df, output_path)
 
@@ -66,8 +67,8 @@ def prepare(
 def _add_season(
     df: pd.DataFrame,
     *,
-    date_col: str = DATE_COL,
-    season_col: str = SEASON_COL,
+    date_col: str = cols.date,
+    season_col: str = cols.season,
     season_start: int = SEASON_START_MONTH,
 ) -> pd.DataFrame:
     """
@@ -93,7 +94,7 @@ def _add_season(
 
     if not is_datetime64_any_dtype(df[date_col]):
         raise ValueError(
-            f"The column {date_col} must of type datetime64, got {df[date_col].type} instead."
+            f"The column {date_col} must of type datetime64, got {df[date_col].dtype} instead."
         )
 
     if season_start not in range(1, 13):
@@ -111,12 +112,17 @@ def _add_season(
     return out
 
 
+def _division_indicator(df: pd.DataFrame) -> pd.DataFrame:
+    df[cols.div] = np.where(df[cols.div] == "D1", 1, 0)
+    return df
+
+
 def _team_match_split(
     df: pd.DataFrame,
     *,
-    home_cols: list[str] = cols.home,
-    away_cols: list[str] = cols.away,
-    new_cols: list[str] = cols.team_match,
+    home_cols: list[str] = col_lists.home,
+    away_cols: list[str] = col_lists.away,
+    new_cols: list[str] = col_lists.team_match,
 ) -> pd.DataFrame:
     """
     Description:
@@ -148,7 +154,7 @@ def _team_match_split(
     out2 = df[away_cols].copy()
     out1.columns = new_cols
     out2.columns = new_cols
-    out1.insert(5, "Home", 1)
-    out2.insert(5, "Home", 0)
+    out1.insert(5, cols.home, 1)
+    out2.insert(5, cols.home, 0)
     out = pd.concat([out1, out2], ignore_index=True)
     return out

@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 
-
 # ==================
 #  Config Variables
 # ==================
@@ -21,7 +20,7 @@ RENAME_MAP = {
 
 
 @dataclass(frozen=True)
-class Columns:
+class ColumnLists:
     raw: list[str] = field(
         default_factory=lambda: [
             "Div",
@@ -65,18 +64,8 @@ class Columns:
             "GoalsAgainst",
         ]
     )
-    team: list[str] = field(
-        default_factory=lambda: [
-            "HomeTeam",
-            "AwayTeam"
-        ]
-    )
-    sort_by: list[str] = field(
-        default_factory=lambda: [
-            "Season",
-            "Div",
-            "Date"
-        ]
-    )
+    team: list[str] = field(default_factory=lambda: ["HomeTeam", "AwayTeam"])
+    sort_by: list[str] = field(default_factory=lambda: ["Season", "Div", "Date"])
 
-COLUMNS = Columns()
+
+COLUMNLISTS = ColumnLists()
