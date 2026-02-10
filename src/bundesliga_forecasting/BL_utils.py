@@ -20,12 +20,10 @@ def read_csv(
     dayfirst: bool = True,
     encoding: str = CSV_ENCODING,
 ) -> pd.DataFrame:
-    df = pd.read_csv(
-        input_path, parse_dates=parse_dates, dayfirst=dayfirst, encoding=encoding
-    )
+    df = pd.read_csv(input_path, encoding=encoding)
     for col in parse_dates:
-        df[col] = pd.to_datetime(
-            df[col], errors="raise", format="mixed", dayfirst=dayfirst
+        df[cols.date] = pd.to_datetime(
+            df[cols.date], dayfirst=True, errors="raise", format="mixed"
         )
     return df
 

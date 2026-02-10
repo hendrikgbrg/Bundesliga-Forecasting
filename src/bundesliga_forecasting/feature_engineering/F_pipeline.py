@@ -13,8 +13,8 @@ from bundesliga_forecasting.feature_engineering.features.F03_performance import 
 from bundesliga_forecasting.feature_engineering.features.F04_history import (
     add_historical_features,
 )
-from bundesliga_forecasting.feature_engineering.features.F05_relativation import (
-    compute_relative_features,
+from bundesliga_forecasting.feature_engineering.features.F05_differencing import (
+    apply_feature_differencing,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def feature_engineering() -> None:
     add_season_features()
     add_performance_features()
     add_historical_features()
-    compute_relative_features()
+    apply_feature_differencing()
 
     logger.info("Feature engineering pipeline finished successfully.")
 

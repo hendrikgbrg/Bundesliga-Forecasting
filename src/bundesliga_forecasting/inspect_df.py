@@ -5,21 +5,9 @@ from bundesliga_forecasting.feature_engineering.F_config import COLUMNS
 paths = PATHS
 cols = COLUMNS
 
-df = read_csv(paths.features / paths.f_filename)
+df = read_csv(paths.merged / paths.m_filename)
 
 
-show_df = df.loc[
-    (df[cols.team] == "Bayern Munich"),
-    [
-        cols.season,
-        cols.date,
-        cols.team,
-        cols.opp,
-        cols.prev_trank_performance,
-        cols.prev_tpoint_performance,
-        cols.prev_goal_superiority,
-        cols.prev_win_ratio,
-    ],
-]
+show_df = df[cols.date].sort_values().drop_duplicates().tolist()
 
-print(show_df.head(10))
+print(show_df)

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from bundesliga_forecasting.BL_config import CSV_ENCODING, PATHS
+from bundesliga_forecasting.BL_config import COLUMNS, CSV_ENCODING, PATHS
 from bundesliga_forecasting.BL_utils import ensure_dir, save_to_csv
 from bundesliga_forecasting.data_structuring.S_config import COLUMNLISTS, RENAME_MAP
 from bundesliga_forecasting.data_structuring.S_utils import detect_csv_files
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 paths = PATHS
 col_lists = COLUMNLISTS
 encoding = CSV_ENCODING
+cols = COLUMNS
 
 
 def clean(
@@ -55,6 +56,9 @@ def clean(
             # Step 2:
             rows = _extract_columns(lines)
             df = pd.DataFrame(data=rows, columns=col_lists.raw)
+            df[cols.date] = pd.to_datetime(
+                df[cols.date], dayfirst=True, errors="raise", format="mixed"
+            )
 
             # Step 3:
             df = _adjust_team_names(df)

@@ -117,34 +117,6 @@ def _add_total_point_performance(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# def _add_rolling_win_loss_ratio(df: pd.DataFrame) -> pd.DataFrame:
-#     logger.info("Calculating rolling win-loss-ratio...")
-#     check_columns(df, [cols.season, cols.team, cols.points])
-
-#     group_cols = [cols.season, cols.team]
-#     group_keys = [df[col] for col in group_cols]
-
-#     outcome_series = produce_outcome_series(df)
-
-#     wins = grouped_aggregate(
-#         outcome_series.wins, group_keys, window=WEIGHTS.rolling, shift=1
-#     )
-#     draws = grouped_aggregate(
-#         outcome_series.draws, group_keys, window=WEIGHTS.rolling, shift=1
-#     )
-#     losses = grouped_aggregate(
-#         outcome_series.losses,
-#         group_keys,
-#         window=WEIGHTS.rolling,
-#         shift=1,
-#         clip_lower=1,
-#     )
-
-#     df[cols.prev_win_loss_ratio] = (wins + draws / 3) / losses
-
-#     return df
-
-
 def _add_rolling_win_ratio(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Calculating rolling win-loss-rate...")
     check_columns(df, [cols.season, cols.team, cols.points, cols.goalsf, cols.goalsa])

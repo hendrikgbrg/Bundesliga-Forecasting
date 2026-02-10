@@ -19,7 +19,7 @@ encoding = CSV_ENCODING
 cols = COLUMNS
 
 
-def compute_relative_features(
+def apply_feature_differencing(
     src_dir: Path = paths.features,
     target_dir: Path = paths.features,
     src_file: str = paths.f_filename,
@@ -67,7 +67,7 @@ def _df_split_merge(df: pd.DataFrame) -> pd.DataFrame:
         df, columns, home_rename=home_in_rename_map, away_rename=away_in_rename_map
     )
 
-    logger.info("Merging the home and away DataFrame for feature relativation...")
+    logger.info("Merging the home and away DataFrame...")
 
     merged = home_in.merge(
         away_in,
@@ -108,7 +108,7 @@ def _home_away_input_split(
     away_rename: dict[str, str],
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     logger.info(
-        "Splitting the original DataFrame into home and away perspectives for feature relativation..."
+        "Splitting the original DataFrame into home and away perspectives for feature differencing..."
     )
 
     home_in = df.loc[df[cols.home] == 1, columns].rename(columns=home_rename)
@@ -124,7 +124,7 @@ def _home_away_output_split(
     home_rename: dict[str, str],
     away_rename: dict[str, str],
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    logger.info("Splitting the merged DataFrame after feature relativation...")
+    logger.info("Splitting the merged DataFrame after feature differencing...")
     home_out = merged[home_columns].rename(columns=home_rename)
     away_out = merged[away_columns].rename(columns=away_rename)
     return home_out, away_out

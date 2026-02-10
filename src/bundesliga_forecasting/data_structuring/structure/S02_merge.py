@@ -3,12 +3,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from bundesliga_forecasting.BL_config import PATHS
+from bundesliga_forecasting.BL_config import COLUMNS, PATHS
 from bundesliga_forecasting.BL_utils import ensure_dir, read_csv, save_to_csv
 from bundesliga_forecasting.data_structuring.S_utils import detect_csv_files
 
 logger = logging.getLogger(__name__)
 paths = PATHS
+cols = COLUMNS
 
 
 def merge(
@@ -39,6 +40,11 @@ def merge(
     csv_files = detect_csv_files(src_dir)
 
     df = pd.concat((read_csv(file) for file in csv_files), ignore_index=True)
+
+    df[cols.date] = pd.to_datetime(
+        df[cols.date], dayfirst=True, errors="raise", format="mixed"
+    )
+
     save_to_csv(df, output_path)
 
     logger.info(
