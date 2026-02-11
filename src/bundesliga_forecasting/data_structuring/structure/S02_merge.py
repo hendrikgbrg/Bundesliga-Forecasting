@@ -41,10 +41,6 @@ def merge(
 
     df = pd.concat((read_csv(file) for file in csv_files), ignore_index=True)
 
-    df[cols.date] = pd.to_datetime(
-        df[cols.date], dayfirst=True, errors="raise", format="mixed"
-    )
-
     save_to_csv(df, output_path)
 
     logger.info(

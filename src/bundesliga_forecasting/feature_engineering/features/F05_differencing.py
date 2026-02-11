@@ -23,7 +23,7 @@ def apply_feature_differencing(
     src_dir: Path = paths.features,
     target_dir: Path = paths.features,
     src_file: str = paths.f_filename,
-    target_file: str = paths.r_filename,
+    target_file: str = paths.d_filename,
 ) -> pd.DataFrame:
     logger.info("Computing relative features...")
     ensure_dir([src_dir, target_dir], ["src", "target"])

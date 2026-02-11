@@ -121,8 +121,7 @@ def _rank_by_sort_group(
     season_snap: pd.DataFrame,
     rank_cols: list[str],
     out_col: str,
-    group_cols: list[str] = [cols.season, cols.div, cols.date],
-    ascending: list[bool] = [True, True, True, False, False, False],
+    ascending: list[bool] | None = None,
 ) -> pd.DataFrame:
     """
     Description:
@@ -145,23 +144,49 @@ def _rank_by_sort_group(
         [cols.season, cols.div, cols.date, cols.team] + MATCH_COLS + RANK_COLS,
     )
 
-    sort_cols = [cols.season, cols.div, cols.date]
+    rank_group_cols = [cols.season, cols.div, cols.date]
+    ffill_group_cols = [cols.season, cols.team]
+    if not ascending:
+        ascending_group = [True] * len(rank_group_cols)
+        ascending_rank = [False] * len(rank_cols)
+        ascending = ascending_group + ascending_rank
+    else:
+        ascending_group = ascending[: len(rank_group_cols)]
+        ascending_rank = ascending[len(rank_group_cols) :]
 
+    col_pairs = list(zip(PREV_RANK_COLS, POST_RANK_COLS))
     season_snap = season_snap.sort_values(
-        by=sort_cols, ascending=ascending[:3], kind="mergesort"
+        by=rank_group_cols, ascending=ascending_group, kind="mergesort"
     )
 
-    season_snap[RANK_COLS] = season_snap.groupby([cols.season, cols.team], sort=False)[
-        RANK_COLS
-    ].ffill()
+    for prev_col, post_col in col_pairs:
+        season_snap[prev_col] = season_snap.groupby(ffill_group_cols, sort=False)[
+            post_col
+        ].ffill()
+        season_snap[post_col] = season_snap.groupby(ffill_group_cols, sort=False)[
+            post_col
+        ].ffill()
 
     season_snap[MATCH_COLS + RANK_COLS] = season_snap[MATCH_COLS + RANK_COLS].fillna(0)
 
     season_snap = season_snap.sort_values(
-        by=sort_cols + rank_cols, ascending=ascending, kind="mergesort"
+        by=rank_group_cols + rank_cols, ascending=ascending, kind="mergesort"
     )
 
-    season_snap[out_col] = season_snap.groupby(group_cols, sort=False).cumcount().add(1)
+    factor = 10**3
+    rev_rank_cols = rank_cols[::-1]
+    season_snap["_rank_key"] = 0
+
+    for index in range(len(rev_rank_cols)):
+        season_snap["_rank_key"] += season_snap[rev_rank_cols[index]] * factor**index
+
+    season_snap[out_col] = (
+        season_snap.groupby(rank_group_cols, sort=False)["_rank_key"]
+        .rank(method="dense", ascending=False)
+        .astype(int)
+    )
+
+    season_snap.drop(columns=["_rank_key"], inplace=True)
 
     season_snap = season_snap.reset_index(drop=True)
 

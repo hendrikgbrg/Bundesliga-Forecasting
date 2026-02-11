@@ -8,6 +8,7 @@ from typing import cast
 # ==================
 
 DATA_ROOT = Path(__file__).resolve().parents[2] / "data"
+TEST_FOLDER = Path(__file__).resolve().parents[2] / "tests"
 RAW_FOLDER = "01_Raw"
 CLEANED_FOLDER = "02_Cleaned"
 MERGED_FOLDER = "03_Merged"
@@ -16,7 +17,8 @@ FEATURE_FOLDER = "05_Features"
 MERGED_FILE = "merged.csv"
 PREPARED_FILE = "prepared.csv"
 FEATURE_FILE = "features.csv"
-REL_FEATURE_FILE = "rel_features.csv"
+DIFF_FEATURE_FILE = "diff_features.csv"
+T_FILE = "test.csv"
 
 CSV_ENCODING = "latin1"
 
@@ -33,10 +35,12 @@ class Paths:
     merged: Path = DATA_ROOT / MERGED_FOLDER
     prepared: Path = DATA_ROOT / PREPARED_FOLDER
     features: Path = DATA_ROOT / FEATURE_FOLDER
+    test: Path = TEST_FOLDER
     m_filename: str = MERGED_FILE
     p_filename: str = PREPARED_FILE
     f_filename: str = FEATURE_FILE
-    r_filename: str = REL_FEATURE_FILE
+    d_filename: str = DIFF_FEATURE_FILE
+    t_filename: str = T_FILE
 
 
 PATHS = Paths()

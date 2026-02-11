@@ -17,13 +17,13 @@ def read_csv(
     input_path: Path,
     *,
     parse_dates: list[str] = [cols.date],
-    dayfirst: bool = True,
+    dayfirst: bool = False,
     encoding: str = CSV_ENCODING,
 ) -> pd.DataFrame:
     df = pd.read_csv(input_path, encoding=encoding)
     for col in parse_dates:
-        df[cols.date] = pd.to_datetime(
-            df[cols.date], dayfirst=True, errors="raise", format="mixed"
+        df[col] = pd.to_datetime(
+            df[col], dayfirst=dayfirst, errors="raise", format="mixed"
         )
     return df
 
