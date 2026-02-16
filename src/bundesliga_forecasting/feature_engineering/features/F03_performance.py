@@ -31,9 +31,9 @@ cols = COLUMNS
 def add_performance_features(
     src_dir: Path = paths.features,
     target_dir: Path = paths.features,
-    src_file: str = paths.f_filename,
-    target_file: str = paths.f_filename,
-) -> pd.DataFrame:
+    src_file: str = paths.feature_file,
+    target_file: str = paths.feature_file,
+) -> None:
     """
     Description:
 
@@ -63,7 +63,6 @@ def add_performance_features(
     df = _add_season_outcome_ratios(df)
 
     save_to_csv(df, output_path)
-    return df
 
 
 #################################################################

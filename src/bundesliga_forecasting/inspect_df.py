@@ -5,7 +5,7 @@ from bundesliga_forecasting.feature_engineering.F_config import COLUMNS
 paths = PATHS
 cols = COLUMNS
 
-df = read_csv(paths.test / (paths.t_filename))
+df = read_csv(paths.test)
 
 
 show_df = df.loc[

@@ -28,9 +28,9 @@ RANK_COLS = PREV_RANK_COLS + POST_RANK_COLS
 def add_season_features(
     src_dir: Path = paths.features,
     target_dir: Path = paths.features,
-    src_file: str = paths.f_filename,
-    target_file: str = paths.f_filename,
-) -> pd.DataFrame:
+    src_file: str = paths.feature_file,
+    target_file: str = paths.feature_file,
+) -> None:
     """
     Description:
 
@@ -59,7 +59,6 @@ def add_season_features(
     season_snap = _add_table_extrema(season_snap)
     df = _merge_back(df, season_snap)
     save_to_csv(df, output_path)
-    return df
 
 
 #########################################################################################################

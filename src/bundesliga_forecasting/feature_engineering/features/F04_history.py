@@ -25,9 +25,9 @@ cols = COLUMNS
 def add_historical_features(
     src_dir: Path = paths.features,
     target_dir: Path = paths.features,
-    src_file: str = paths.f_filename,
-    target_file: str = paths.f_filename,
-) -> pd.DataFrame:
+    src_file: str = paths.feature_file,
+    target_file: str = paths.feature_file,
+) -> None:
     logger.info("Adding historical features to the DataFrame...")
     ensure_dir([src_dir, target_dir], ["src", "target"])
 
@@ -43,7 +43,6 @@ def add_historical_features(
     df = _merge_back(df, season_end)
 
     save_to_csv(df, output_path)
-    return df
 
 
 ##############################################################

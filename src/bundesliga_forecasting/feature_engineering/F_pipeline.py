@@ -16,6 +16,9 @@ from bundesliga_forecasting.feature_engineering.features.F04_history import (
 from bundesliga_forecasting.feature_engineering.features.F05_differencing import (
     apply_feature_differencing,
 )
+from bundesliga_forecasting.feature_engineering.features.F06_selection import (
+    select_and_split,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,7 @@ def feature_engineering() -> None:
     add_performance_features()
     add_historical_features()
     apply_feature_differencing()
+    select_and_split()
 
     logger.info("Feature engineering pipeline finished successfully.")
 

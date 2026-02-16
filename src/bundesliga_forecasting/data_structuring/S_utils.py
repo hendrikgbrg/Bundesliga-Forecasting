@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from pathlib import Path
 
@@ -31,4 +32,3 @@ def detect_csv_files(path: Path) -> list:
     if len(csv_files) == 0:
         raise FileNotFoundError(f"No CSV-files found in {path}.")
     return csv_files
-

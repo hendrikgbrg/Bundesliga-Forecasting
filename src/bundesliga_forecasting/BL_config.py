@@ -14,11 +14,16 @@ CLEANED_FOLDER = "02_Cleaned"
 MERGED_FOLDER = "03_Merged"
 PREPARED_FOLDER = "04_Prepared"
 FEATURE_FOLDER = "05_Features"
+FINAL_FOLDER = "06_Final"
+
 MERGED_FILE = "merged.csv"
 PREPARED_FILE = "prepared.csv"
 FEATURE_FILE = "features.csv"
 DIFF_FEATURE_FILE = "diff_features.csv"
-T_FILE = "test.csv"
+TRAIN_FILE = "train.csv"
+TEST_FILE = "test.csv"
+VALID_FILE = "valid.csv"
+
 
 CSV_ENCODING = "latin1"
 
@@ -35,12 +40,15 @@ class Paths:
     merged: Path = DATA_ROOT / MERGED_FOLDER
     prepared: Path = DATA_ROOT / PREPARED_FOLDER
     features: Path = DATA_ROOT / FEATURE_FOLDER
+    final: Path = DATA_ROOT / FINAL_FOLDER
     test: Path = TEST_FOLDER
-    m_filename: str = MERGED_FILE
-    p_filename: str = PREPARED_FILE
-    f_filename: str = FEATURE_FILE
-    d_filename: str = DIFF_FEATURE_FILE
-    t_filename: str = T_FILE
+    merged_file: str = MERGED_FILE
+    prepared_file: str = PREPARED_FILE
+    feature_file: str = FEATURE_FILE
+    diff_file: str = DIFF_FEATURE_FILE
+    train_file: str = TRAIN_FILE
+    test_file: str = TEST_FILE
+    valid_file: str = VALID_FILE
 
 
 PATHS = Paths()

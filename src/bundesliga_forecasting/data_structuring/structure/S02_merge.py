@@ -15,7 +15,7 @@ cols = COLUMNS
 def merge(
     src_dir: Path = paths.cleaned,
     target_dir: Path = paths.merged,
-    target_file: str = paths.m_filename,
+    target_file: str = paths.merged_file,
 ) -> None:
     """
     Description:

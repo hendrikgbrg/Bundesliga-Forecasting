@@ -29,8 +29,8 @@ cols = COLUMNS
 def prepare(
     src_dir: Path = paths.merged,
     target_dir: Path = paths.prepared,
-    src_file: str = paths.m_filename,
-    target_file: str = paths.p_filename,
+    src_file: str = paths.merged_file,
+    target_file: str = paths.prepared_file,
 ) -> None:
     """
     Description:

@@ -22,9 +22,9 @@ encoding = CSV_ENCODING
 def add_score_features(
     src_dir: Path = paths.prepared,
     target_dir: Path = paths.features,
-    src_file: str = paths.p_filename,
-    target_file: str = paths.f_filename,
-) -> pd.DataFrame:
+    src_file: str = paths.prepared_file,
+    target_file: str = paths.feature_file,
+) -> None:
     """
     Description:
 
@@ -52,7 +52,6 @@ def add_score_features(
     df = _add_cum_prev_match_scores(df)
 
     save_to_csv(df, output_path)
-    return df
 
 
 #######################################################
