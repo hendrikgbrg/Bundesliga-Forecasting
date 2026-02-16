@@ -5,16 +5,19 @@ from bundesliga_forecasting.feature_engineering.F_config import COLUMNS
 paths = PATHS
 cols = COLUMNS
 
-df = read_csv(paths.features / paths.f_filename)
+df = read_csv(paths.test / (paths.t_filename))
 
 
-show_df = df[
-    # (df[cols.team] == "Bayern Munich") | (df[cols.opp] == "Bayern Munich"),
+show_df = df.loc[
+    (df[cols.team] == "Bayern Munich"),
     [
         cols.date,
         cols.team,
-        cols.opp,
-        cols.prev_trank_performance,
+        cols.points,
+        cols.prev_tpoints,
+        cols.post_tpoints,
+        cols.prev_rank,
+        # cols.post_rank,
         # cols.post_tpoints,
         # cols.post_tgoaldiff,
         # cols.post_tgoalsf,
@@ -22,8 +25,8 @@ show_df = df[
         # cols.post_trank,
         # cols.prev_min_tpoints,
         # cols.prev_max_tpoints,
-    ]
+    ],
 ]
 
 print(df[cols.date].dtype)
-print(show_df.head(20))
+print(show_df.head(102))

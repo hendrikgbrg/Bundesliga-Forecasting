@@ -160,12 +160,12 @@ def _rank_by_sort_group(
     )
 
     for prev_col, post_col in col_pairs:
-        season_snap[prev_col] = season_snap.groupby(ffill_group_cols, sort=False)[
-            post_col
-        ].ffill()
         season_snap[post_col] = season_snap.groupby(ffill_group_cols, sort=False)[
             post_col
         ].ffill()
+        season_snap[prev_col] = season_snap.groupby(ffill_group_cols, sort=False)[
+            post_col
+        ].shift(1)
 
     season_snap[MATCH_COLS + RANK_COLS] = season_snap[MATCH_COLS + RANK_COLS].fillna(0)
 
