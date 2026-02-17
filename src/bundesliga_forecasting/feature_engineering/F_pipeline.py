@@ -16,7 +16,7 @@ from bundesliga_forecasting.feature_engineering.features.F04_history import (
 from bundesliga_forecasting.feature_engineering.features.F05_differencing import (
     apply_feature_differencing,
 )
-from bundesliga_forecasting.feature_engineering.features.F06_selection import (
+from bundesliga_forecasting.feature_engineering.features.F06_poisson_selection import (
     select_and_split,
 )
 

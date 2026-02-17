@@ -22,7 +22,7 @@ cols = COLUMNS
 
 def select_and_split(
     src_dir: Path = paths.features,
-    target_dir: Path = paths.final,
+    target_dir: Path = paths.final_poisson,
     src_file: str = paths.diff_file,
     train_file: str = paths.train_file,
     valid_file: str = paths.valid_file,

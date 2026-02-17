@@ -15,6 +15,8 @@ MERGED_FOLDER = "03_Merged"
 PREPARED_FOLDER = "04_Prepared"
 FEATURE_FOLDER = "05_Features"
 FINAL_FOLDER = "06_Final"
+POISSON_FOLDER = "01_ElNet_Poisson"
+NN_FOLDER = "02_NN"
 
 MERGED_FILE = "merged.csv"
 PREPARED_FILE = "prepared.csv"
@@ -40,7 +42,8 @@ class Paths:
     merged: Path = DATA_ROOT / MERGED_FOLDER
     prepared: Path = DATA_ROOT / PREPARED_FOLDER
     features: Path = DATA_ROOT / FEATURE_FOLDER
-    final: Path = DATA_ROOT / FINAL_FOLDER
+    final_poisson: Path = DATA_ROOT / FINAL_FOLDER / POISSON_FOLDER
+    final_nn: Path = DATA_ROOT / FINAL_FOLDER / NN_FOLDER
     test: Path = TEST_FOLDER
     merged_file: str = MERGED_FILE
     prepared_file: str = PREPARED_FILE
