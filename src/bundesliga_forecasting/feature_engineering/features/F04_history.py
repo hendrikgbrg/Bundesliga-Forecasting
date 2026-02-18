@@ -121,8 +121,6 @@ def _merge_back(df: pd.DataFrame, season_end: pd.DataFrame) -> pd.DataFrame:
         cols.season,
         cols.team,
         cols.seasonal_goal_superiority,
-        cols.seasonal_win_loss_ratio,
-        cols.seasonal_win_ratio,
         cols.prev_hist_goal_superiority,
         cols.prev_hist_trank_performance,
         cols.prev_hist_tpoint_performance,

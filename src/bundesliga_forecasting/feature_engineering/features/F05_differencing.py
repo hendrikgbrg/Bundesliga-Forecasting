@@ -33,6 +33,7 @@ def apply_feature_differencing(
 
     df = read_csv(input_path)
     df = _differencing(df)
+    df = _select_features(df)
     save_to_csv(df, output_path)
 
 
@@ -45,7 +46,6 @@ def _differencing(df: pd.DataFrame) -> pd.DataFrame:
     join_keys_right = match_keys + [cols.opp, cols.team]
 
     check_columns(df, join_keys_left + list(preds))
-
     merged = df.merge(
         df,
         left_on=join_keys_left,
@@ -58,7 +58,17 @@ def _differencing(df: pd.DataFrame) -> pd.DataFrame:
     for pred in preds:
         merged[pred] = merged[pred] - merged[f"{pred}_opp"]
 
-    opp_cols = [f"{pred}_opp" for pred in preds]
+    opp_cols = merged.columns.difference(df.columns)
     merged = merged.drop(columns=opp_cols)
 
     return merged
+
+
+def _select_features(df: pd.DataFrame) -> pd.DataFrame:
+    check_columns(
+        df, [cols.goalsf, cols.season, cols.date, cols.team, cols.opp] + preds
+    )
+
+    out = df[[cols.goalsf, cols.season, cols.date, cols.team, cols.opp] + preds]
+
+    return out
