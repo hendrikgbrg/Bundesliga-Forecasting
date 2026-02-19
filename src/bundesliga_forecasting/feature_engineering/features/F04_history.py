@@ -64,7 +64,6 @@ def _season_end(df: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFrame:
         cols.post_tgoalsa,
         cols.post_trank_performance,
         cols.post_tpoint_performance,
-        cols.seasonal_win_loss_ratio,
         cols.seasonal_win_ratio,
     ]
     check_columns(df, required_cols)
@@ -98,7 +97,6 @@ def _compute_history(season_end: pd.DataFrame) -> pd.DataFrame:
         cols.prev_hist_goal_superiority: cols.seasonal_goal_superiority,
         cols.prev_hist_trank_performance: cols.post_trank_performance,
         cols.prev_hist_tpoint_performance: cols.post_tpoint_performance,
-        cols.prev_hist_win_loss_ratio: cols.seasonal_win_loss_ratio,
         cols.prev_hist_win_ratio: cols.seasonal_win_ratio,
     }
 
@@ -124,7 +122,6 @@ def _merge_back(df: pd.DataFrame, season_end: pd.DataFrame) -> pd.DataFrame:
         cols.prev_hist_goal_superiority,
         cols.prev_hist_trank_performance,
         cols.prev_hist_tpoint_performance,
-        cols.prev_hist_win_loss_ratio,
         cols.prev_hist_win_ratio,
     ]
     merge_on_cols = [cols.season, cols.team]

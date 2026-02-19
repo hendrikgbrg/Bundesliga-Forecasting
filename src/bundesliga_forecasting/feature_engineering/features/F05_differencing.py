@@ -66,9 +66,11 @@ def _differencing(df: pd.DataFrame) -> pd.DataFrame:
 
 def _select_features(df: pd.DataFrame) -> pd.DataFrame:
     check_columns(
-        df, [cols.goalsf, cols.season, cols.date, cols.team, cols.opp] + preds
+        df, [cols.goalsf, cols.season, cols.div, cols.date, cols.team, cols.opp] + preds
     )
 
-    out = df[[cols.goalsf, cols.season, cols.date, cols.team, cols.opp] + preds]
+    out = df[
+        [cols.goalsf, cols.season, cols.div, cols.date, cols.team, cols.opp] + preds
+    ]
 
     return out
