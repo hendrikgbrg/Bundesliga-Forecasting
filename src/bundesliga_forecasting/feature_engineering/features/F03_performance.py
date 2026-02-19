@@ -13,6 +13,7 @@ from bundesliga_forecasting.BL_utils import (
     save_to_csv,
 )
 from bundesliga_forecasting.feature_engineering.F_config import (
+    DRAW_VALUE,
     WEIGHTS,
     ZONES,
 )
@@ -139,7 +140,7 @@ def _add_rolling_win_ratio(df: pd.DataFrame) -> pd.DataFrame:
         clip_lower=1,
     )
 
-    df[cols.prev_win_ratio] = (wins + draws / 3) / games
+    df[cols.prev_win_ratio] = (wins + draws * DRAW_VALUE) / games
 
     return df
 
@@ -176,14 +177,10 @@ def _add_season_outcome_ratios(df: pd.DataFrame) -> pd.DataFrame:
 
     wins = grouped_aggregate(outcome_series.wins, group_keys, window=None, shift=0)
     draws = grouped_aggregate(outcome_series.draws, group_keys, window=None, shift=0)
-    losses = grouped_aggregate(
-        outcome_series.losses, group_keys, window=None, shift=0, clip_lower=1
-    )
     games = grouped_aggregate(
         outcome_series.games, group_keys, window=None, shift=0, clip_lower=1
     )
 
-    df[cols.seasonal_win_loss_ratio] = (wins + draws / 3) / losses
-    df[cols.seasonal_win_ratio] = (wins + draws / 3) / games
+    df[cols.seasonal_win_ratio] = (wins + draws * DRAW_VALUE) / games
 
     return df

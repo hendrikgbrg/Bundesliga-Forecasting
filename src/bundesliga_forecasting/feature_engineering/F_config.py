@@ -43,3 +43,5 @@ MATCH_COLS = [
     COLUMNS.goalsa,
     COLUMNS.points,
 ]
+
+DRAW_VALUE = 0.5

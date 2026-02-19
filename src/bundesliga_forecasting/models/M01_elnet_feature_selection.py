@@ -51,17 +51,15 @@ def data_setup(
     df = read_csv(input_path)
     train, valid, test = _split(df)
     selected_features = _elnet_selection(train)
-    ref_team = train[cols.team].value_counts().idxmax()
 
     set_list = [train, valid, test]
     path_list = [output_train_path, output_valid_path, output_test_path]
     scaler = StandardScaler()
     scaler = scaler.fit(train[selected_features])
-    logger.info(
-        "Finishing the datasets by scaling the selected fatures, adding team indicators and removing additional columns..."
-    )
+
+    logger.info("Scaling selected fatures...")
     for set, path in zip(set_list, path_list):
-        set = _finish_dataset(set, selected_features, scaler, ref_team=ref_team)
+        set = _scaling_features(set, selected_features, scaler)
         save_to_csv(set, path)
 
 
@@ -101,8 +99,7 @@ def _split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
 def _elnet_selection(df: pd.DataFrame) -> list[str]:
     logger.info("Setting up Elastic-Net Configuration...")
-    match_cols = [cols.team, cols.opp]
-    check_columns(df, [cols.goalsf] + match_cols + list(preds))
+    check_columns(df, [cols.goalsf] + list(preds))
 
     X = df[list(preds)].copy()
     y = df[cols.goalsf].to_numpy()
@@ -138,37 +135,36 @@ def _elnet_selection(df: pd.DataFrame) -> list[str]:
     return selected_features
 
 
-def _finish_dataset(
+def _scaling_features(
     df: pd.DataFrame,
     selected_features: list[str],
     scaler: StandardScaler,
-    ref_team: int | str,
 ) -> pd.DataFrame:
-    check_columns(df, [cols.goalsf, cols.team, cols.opp] + selected_features)
-    out = df[[cols.goalsf, cols.team, cols.opp] + selected_features].copy()
+    check_columns(df, [cols.goalsf] + selected_features)
+    out = df[[cols.goalsf] + selected_features].copy()
 
     out[selected_features] = scaler.transform(out[selected_features])
     out[selected_features] = out[selected_features].round(6)
 
-    out = _add_team_indicators(out, ref_team=ref_team)
-    out = out.drop(columns=[cols.team, cols.opp])
+    # out = _add_team_indicators(out, ref_team=ref_team)
+    # out = out.drop(columns=[cols.team, cols.opp])
     return out
 
 
-def _add_team_indicators(df: pd.DataFrame, ref_team: int | str) -> pd.DataFrame:
-    team_dummies = (
-        pd.get_dummies(df[cols.team], prefix="Team_")
-        .astype(int)
-        .drop(columns=f"Team_{ref_team}", errors="ignore")
-    )
-    opp_dummies = (
-        pd.get_dummies(df[cols.opp], prefix="Opp_")
-        .astype(int)
-        .drop(columns=f"Opp_{ref_team}", errors="ignore")
-    )
+# def _add_team_indicators(df: pd.DataFrame, ref_team: int | str) -> pd.DataFrame:
+#     team_dummies = (
+#         pd.get_dummies(df[cols.team], prefix="Team_")
+#         .astype(int)
+#         .drop(columns=f"Team_{ref_team}", errors="ignore")
+#     )
+#     opp_dummies = (
+#         pd.get_dummies(df[cols.opp], prefix="Opp_")
+#         .astype(int)
+#         .drop(columns=f"Opp_{ref_team}", errors="ignore")
+#     )
 
-    df = pd.concat([df, team_dummies, opp_dummies], axis=1)
-    return df
+#     df = pd.concat([df, team_dummies, opp_dummies], axis=1)
+#     return df
 
 
 def main() -> None:

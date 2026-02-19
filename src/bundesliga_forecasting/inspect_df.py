@@ -5,28 +5,26 @@ from bundesliga_forecasting.feature_engineering.F_config import COLUMNS
 paths = PATHS
 cols = COLUMNS
 
-df = read_csv(paths.test)
+df = read_csv(paths.features / paths.feature_file)
 
 
-show_df = df.loc[
+filter_df = df.loc[
     (df[cols.team] == "Bayern Munich"),
     [
         cols.date,
         cols.team,
-        cols.points,
-        cols.prev_tpoints,
-        cols.post_tpoints,
-        cols.prev_rank,
-        # cols.post_rank,
-        # cols.post_tpoints,
-        # cols.post_tgoaldiff,
-        # cols.post_tgoalsf,
-        # cols.prev_trank,
-        # cols.post_trank,
-        # cols.prev_min_tpoints,
-        # cols.prev_max_tpoints,
+        cols.goaldiff,
+        cols.prev_win_ratio,
+        cols.prev_hist_win_ratio,
     ],
 ]
 
-print(df[cols.date].dtype)
-print(show_df.head(102))
+group_df = (
+    df[df[cols.team] == "Bayern Munich"]
+    .groupby([cols.season])[
+        [cols.date, cols.seasonal_win_ratio, cols.prev_hist_win_ratio]
+    ]
+    .last()
+)
+
+print(group_df.head(10))
