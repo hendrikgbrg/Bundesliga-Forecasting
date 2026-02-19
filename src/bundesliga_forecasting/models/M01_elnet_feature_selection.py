@@ -33,31 +33,24 @@ elnet = ELASTICNET
 
 def data_setup(
     src_dir: Path = paths.features,
-    target_dir: Path = paths.elnet,
     src_file: str = paths.diff_file,
-    target_train_file: str = paths.train_file,
-    target_valid_file: str = paths.valid_file,
-    target_test_file: str = paths.test_file,
+    target_dir: Path = paths.elnet,
 ) -> None:
     setup_logging()
     logger.info("Starting Elastic-Net feature selection process...")
     ensure_dir([src_dir, target_dir], ["src", "target"])
 
     input_path = src_dir / src_file
-    output_train_path = target_dir / target_train_file
-    output_valid_path = target_dir / target_valid_file
-    output_test_path = target_dir / target_test_file
 
     df = read_csv(input_path)
     train, valid, test = _split(df)
     selected_features = _elnet_selection(train)
-
-    set_list = [train, valid, test]
-    path_list = [output_train_path, output_valid_path, output_test_path]
     scaler = StandardScaler()
     scaler = scaler.fit(train[selected_features])
 
     logger.info("Scaling selected fatures...")
+    set_list = [train, valid, test]
+    path_list = outputs_paths(target_dir, selected_features)
     for set, path in zip(set_list, path_list):
         set = _scaling_features(set, selected_features, scaler)
         save_to_csv(set, path)
@@ -133,6 +126,19 @@ def _elnet_selection(df: pd.DataFrame) -> list[str]:
     )
 
     return selected_features
+
+
+def outputs_paths(target_dir: Path, selected_features: list[str]) -> list[Path]:
+    n_preds = len(list(preds))
+    n_selected = len(selected_features)
+    file_list = [paths.train_file, paths.valid_file, paths.test_file]
+    file_names = [
+        (f"{n_selected}-{n_preds}_" if n_selected < n_preds else "full_") + file
+        for file in file_list
+    ]
+    path_list = [target_dir / file_name for file_name in file_names]
+
+    return path_list
 
 
 def _scaling_features(
