@@ -19,20 +19,20 @@ encoding = CSV_ENCODING
 cols = COLUMNS
 
 
-def apply_feature_differencing(
+def apply_feature_combination(
     src_dir: Path = paths.features,
     target_dir: Path = paths.features,
     src_file: str = paths.feature_file,
-    target_file: str = paths.diff_file,
+    target_file: str = paths.combined_file,
 ) -> None:
-    logger.info("Computing feature differences...")
+    logger.info("Combining home and away features...")
     ensure_dir([src_dir, target_dir], ["src", "target"])
 
     input_path = src_dir / src_file
     output_path = target_dir / target_file
 
     df = read_csv(input_path)
-    df = _differencing(df)
+    df = _combine_home_away_features(df)
     df = _select_features(df)
     save_to_csv(df, output_path)
 
@@ -40,13 +40,13 @@ def apply_feature_differencing(
 #################################################################
 
 
-def _differencing(df: pd.DataFrame) -> pd.DataFrame:
+def _combine_home_away_features(df: pd.DataFrame) -> pd.DataFrame:
     match_keys = [cols.season, cols.div, cols.date]
     join_keys_left = match_keys + [cols.team, cols.opp]
     join_keys_right = match_keys + [cols.opp, cols.team]
 
     check_columns(df, join_keys_left + list(preds))
-    merged = df.merge(
+    combined = df.merge(
         df,
         left_on=join_keys_left,
         right_on=join_keys_right,
@@ -55,22 +55,24 @@ def _differencing(df: pd.DataFrame) -> pd.DataFrame:
         validate="one_to_one",
     )
 
-    for pred in preds:
-        merged[pred] = merged[pred] - merged[f"{pred}_opp"]
-
-    opp_cols = merged.columns.difference(df.columns)
-    merged = merged.drop(columns=opp_cols)
-
-    return merged
+    return combined
 
 
 def _select_features(df: pd.DataFrame) -> pd.DataFrame:
+    opp_preds = [
+        f"{pred}_opp" for pred in preds if (pred != cols.home) * (pred != cols.div)
+    ]
     check_columns(
-        df, [cols.goalsf, cols.season, cols.div, cols.date, cols.team, cols.opp] + preds
+        df,
+        [cols.goalsf, cols.season, cols.div, cols.date, cols.team, cols.opp]
+        + preds
+        + opp_preds,
     )
 
     out = df[
-        [cols.goalsf, cols.season, cols.div, cols.date, cols.team, cols.opp] + preds
+        [cols.goalsf, cols.season, cols.div, cols.date, cols.team, cols.opp]
+        + preds
+        + opp_preds
     ]
 
     return out

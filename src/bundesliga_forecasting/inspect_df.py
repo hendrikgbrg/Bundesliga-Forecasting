@@ -1,30 +1,39 @@
 from bundesliga_forecasting.BL_config import PATHS
-from bundesliga_forecasting.BL_utils import read_csv
+from bundesliga_forecasting.BL_utils import check_columns, read_csv
 from bundesliga_forecasting.feature_engineering.F_config import COLUMNS
 
 paths = PATHS
 cols = COLUMNS
 
-df = read_csv(paths.features / paths.feature_file)
+df = read_csv(paths.features / paths.combined_file)
+all_cols = df.columns
+for col in all_cols:
+    print(f"\n{col}")
+team = "Karlsruhe"
+columns = [
+    cols.season,
+    cols.div,
+    cols.date,
+    cols.team,
+    cols.prev_season_tpoint_performance,
+    cols.rel_effect_prev_season_tpoint_performance,
+    # cols.prev_season_tpoint_performance,
+    # cols.prev_hist_tpoint_performance,
+]
+
+check_columns(df, columns)
 
 
 filter_df = df.loc[
-    (df[cols.team] == "Bayern Munich"),
-    [
-        cols.date,
-        cols.team,
-        cols.goaldiff,
-        cols.prev_win_ratio,
-        cols.prev_hist_win_ratio,
-    ],
+    (df[cols.team] == team),
+    columns,
 ]
 
 group_df = (
-    df[df[cols.team] == "Bayern Munich"]
-    .groupby([cols.season])[
-        [cols.date, cols.seasonal_win_ratio, cols.prev_hist_win_ratio]
-    ]
+    df[df[cols.team] == team]
+    .groupby([cols.season])[columns]
     .last()
+    .reset_index(drop=True)
 )
 
 print(group_df.head(10))

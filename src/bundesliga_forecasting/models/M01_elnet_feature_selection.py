@@ -4,7 +4,10 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import ElasticNetCV
+from sklearn.linear_model import SGDRegressor
+from sklearn.metrics import make_scorer, mean_squared_error
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from bundesliga_forecasting.BL_config import (
@@ -25,16 +28,19 @@ from bundesliga_forecasting.models.M_config import ELASTICNET
 logger = logging.getLogger(__name__)
 
 paths = PATHS
-preds = PREDICTORS.values()
+preds = list(PREDICTORS.values())
 encoding = CSV_ENCODING
 cols = COLUMNS
 elnet = ELASTICNET
 
+opp_preds = [f"{pred}_opp" for pred in preds if pred != cols.home]
+preds = preds + opp_preds
+
 
 def data_setup(
     src_dir: Path = paths.features,
-    src_file: str = paths.diff_file,
-    target_dir: Path = paths.elnet,
+    src_file: str = paths.combined_file,
+    target_dir: Path = paths.features,
 ) -> None:
     setup_logging()
     logger.info("Starting Elastic-Net feature selection process...")
@@ -43,134 +49,113 @@ def data_setup(
     input_path = src_dir / src_file
 
     df = read_csv(input_path)
-    train, valid, test = _split(df)
-    selected_features = _elnet_selection(train)
-    scaler = StandardScaler()
-    scaler = scaler.fit(train[selected_features])
+    df = df.sort_values([cols.date]).reset_index(drop=True)
+    train, test = _split(df)
+    model = _train_poisson_elnet(train)
 
-    logger.info("Scaling selected fatures...")
-    set_list = [train, valid, test]
-    path_list = outputs_paths(target_dir, selected_features)
-    for set, path in zip(set_list, path_list):
-        set = _scaling_features(set, selected_features, scaler)
-        save_to_csv(set, path)
+    # model output
+    selected_features = _log_selected_features(model, train[preds])
+    # scaler = model.named_steps["scaler"]
+
+    df_selected = df[
+        [cols.goalsf, cols.season, cols.div, cols.date, cols.team] + selected_features
+    ]
+    df_train = df_selected.loc[train.index]
+    df_test = df_selected.loc[test.index]
+    save_to_csv(df_train, paths.features / paths.train_file)
+    save_to_csv(df_test, paths.features / paths.test_file)
 
 
 #################################################################
 
 
-def _split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    logger.info("Splitting the dataset into train, validation and test datasets...")
+def _split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    logger.info("Splitting the dataset into train and test datasets...")
     check_columns(df, [cols.season, cols.div, cols.date])
     seasons = sorted(df[cols.season].unique())
 
-    train_season = seasons[:-2]
-    valid_season = [seasons[-2]]
+    train_season = seasons[:-1]
     test_season = [seasons[-1]]
 
-    train = (
-        df[df[cols.season].isin(train_season)]
-        .sort_values([cols.season, cols.div, cols.date])
-        .drop(columns=[cols.season, cols.div, cols.date])
-        .reset_index(drop=True)
+    train = df[df[cols.season].isin(train_season)].drop(
+        columns=[cols.season, cols.div, cols.date]
     )
-    valid = (
-        df[df[cols.season].isin(valid_season)]
-        .sort_values([cols.season, cols.div, cols.date])
-        .drop(columns=[cols.season, cols.div, cols.date])
-        .reset_index(drop=True)
-    )
-    test = (
-        df[df[cols.season].isin(test_season)]
-        .sort_values([cols.season, cols.div, cols.date])
-        .drop(columns=[cols.season, cols.div, cols.date])
-        .reset_index(drop=True)
+    test = df[df[cols.season].isin(test_season)].drop(
+        columns=[cols.season, cols.div, cols.date]
     )
 
-    return train, valid, test
+    return train, test
 
 
-def _elnet_selection(df: pd.DataFrame) -> list[str]:
-    logger.info("Setting up Elastic-Net Configuration...")
-    check_columns(df, [cols.goalsf] + list(preds))
+def _train_poisson_elnet(train: pd.DataFrame) -> Pipeline:
+    logger.info("Training Elastic-Net model with Gaussian loss...")
 
-    X = df[list(preds)].copy()
-    y = df[cols.goalsf].to_numpy()
+    X_train = train[preds]
+    y_train = train[cols.goalsf]
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    tscv = TimeSeriesSplit(n_splits=5)
 
-    model = ElasticNetCV(
-        fit_intercept=elnet.fit_intercept,
-        l1_ratio=elnet.l1_ratio,
-        alphas=elnet.alphas,
-        cv=elnet.cv,
-        max_iter=elnet.max_iter,
-        n_jobs=elnet.n_jobs,
+    pipeline = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            (
+                "model",
+                SGDRegressor(
+                    loss="squared_error",
+                    penalty="elasticnet",
+                    fit_intercept=True,
+                    max_iter=1000,
+                    tol=1e-4,
+                    random_state=42,
+                ),
+            ),
+        ]
     )
 
-    model.fit(X_scaled, y)
+    param_grid = {
+        "model__alpha": np.logspace(-4, 1, 20),
+        "model__l1_ratio": [0.1, 0.3, 0.5, 0.7, 0.9],
+    }
 
-    logger.info(f"Best alpha: {model.alpha_}")
-    logger.info(f"Best l1_ratio: {model.l1_ratio_}")
-    coefs = model.coef_
-    selected_coefs = np.abs(coefs) > 1e-6
-    selected_features = X.columns[selected_coefs].tolist()
-    removed = [feature for feature in preds if feature not in selected_features]
+    scorer = make_scorer(mean_squared_error, greater_is_better=False)
 
-    if len(selected_features) == 0:
-        raise RuntimeError("Elastic Net removed all predictors.")
+    grid = GridSearchCV(
+        estimator=pipeline,
+        param_grid=param_grid,
+        scoring=scorer,
+        cv=tscv,
+        n_jobs=-1,
+        verbose=1,
+    )
+
+    grid.fit(X_train, y_train)
+    best_model = grid.best_estimator_
+
+    logger.info(f"Best alpha-value: {grid.best_params_['model__alpha']}")
+    logger.info(f"Best l1_ratio: {grid.best_params_['model__l1_ratio']}")
+
+    return best_model
+
+
+def _log_selected_features(model: Pipeline, X_train: pd.DataFrame) -> list[str]:
+    coefs = model.named_steps["model"].coef_
+    selected_mask = np.abs(coefs) > 1e-8
+    selected_features = X_train.columns[selected_mask].tolist()
+    removed_features = X_train.columns[~selected_mask].tolist()
 
     logger.info(
-        f"Selected {len(selected_features)} / {len(preds)} features with non-zero coefficients: \n{selected_features}\n\nRemoved features: \n{removed}"
+        f"Selected {len(selected_features)} / {len(X_train.columns)} features.\n"
+        f"{selected_features}\n\n"
+        f"Removed features:\n"
+        f"{removed_features}"
     )
 
+    if len(selected_features) == 0:
+        raise RuntimeError(
+            "All features were removed by Elastic-Net. Please check hyperparameters."
+        )
+
     return selected_features
-
-
-def outputs_paths(target_dir: Path, selected_features: list[str]) -> list[Path]:
-    n_preds = len(list(preds))
-    n_selected = len(selected_features)
-    file_list = [paths.train_file, paths.valid_file, paths.test_file]
-    file_names = [
-        (f"{n_selected}-{n_preds}_" if n_selected < n_preds else "full_") + file
-        for file in file_list
-    ]
-    path_list = [target_dir / file_name for file_name in file_names]
-
-    return path_list
-
-
-def _scaling_features(
-    df: pd.DataFrame,
-    selected_features: list[str],
-    scaler: StandardScaler,
-) -> pd.DataFrame:
-    check_columns(df, [cols.goalsf] + selected_features)
-    out = df[[cols.goalsf] + selected_features].copy()
-
-    out[selected_features] = scaler.transform(out[selected_features])
-    out[selected_features] = out[selected_features].round(6)
-
-    # out = _add_team_indicators(out, ref_team=ref_team)
-    # out = out.drop(columns=[cols.team, cols.opp])
-    return out
-
-
-# def _add_team_indicators(df: pd.DataFrame, ref_team: int | str) -> pd.DataFrame:
-#     team_dummies = (
-#         pd.get_dummies(df[cols.team], prefix="Team_")
-#         .astype(int)
-#         .drop(columns=f"Team_{ref_team}", errors="ignore")
-#     )
-#     opp_dummies = (
-#         pd.get_dummies(df[cols.opp], prefix="Opp_")
-#         .astype(int)
-#         .drop(columns=f"Opp_{ref_team}", errors="ignore")
-#     )
-
-#     df = pd.concat([df, team_dummies, opp_dummies], axis=1)
-#     return df
 
 
 def main() -> None:

@@ -52,7 +52,7 @@ def prepare(
 
     df = read_csv(input_path)
     df = _add_season(df)
-    # df = _division_indicator(df)
+    df = _division_indicator(df)
     df = _team_match_split(df)
     df = df_sort(df, sort_cols=col_lists.sort_by)
 
@@ -112,9 +112,9 @@ def _add_season(
     return out
 
 
-# def _division_indicator(df: pd.DataFrame) -> pd.DataFrame:
-#     df[cols.div] = np.where(df[cols.div] == "D1", 1, 0)
-#     return df
+def _division_indicator(df: pd.DataFrame) -> pd.DataFrame:
+    df[cols.div] = np.where(df[cols.div] == "D1", 1, 2)
+    return df
 
 
 def _team_match_split(

@@ -19,7 +19,8 @@ ELNET_FOLDER = "06_Elastic-Net_Selection"
 MERGED_FILE = "merged.csv"
 PREPARED_FILE = "prepared.csv"
 FEATURE_FILE = "features.csv"
-DIFF_FEATURE_FILE = "diff_features.csv"
+DAILY_TABLES_FILE = "daily_tables.csv"
+COMBINED_FEATURE_FILE = "combined_features.csv"
 TRAIN_FILE = "train.csv"
 TEST_FILE = "test.csv"
 VALID_FILE = "valid.csv"
@@ -45,7 +46,8 @@ class Paths:
     merged_file: str = MERGED_FILE
     prepared_file: str = PREPARED_FILE
     feature_file: str = FEATURE_FILE
-    diff_file: str = DIFF_FEATURE_FILE
+    daily_tables_file: str = DAILY_TABLES_FILE
+    combined_file: str = COMBINED_FEATURE_FILE
     train_file: str = TRAIN_FILE
     test_file: str = TEST_FILE
     valid_file: str = VALID_FILE
@@ -71,6 +73,9 @@ class Columns:
     points: str = "Points"
 
     # post-match cumulation
+    post_twins: str = "PostTotalWins"
+    post_tlosses: str = "PostTotalLosses"
+    post_tdraws: str = "PostTotalDraws"
     post_tgoalsf: str = "PostTotalGoalsFor"
     post_tgoalsa: str = "PostTotalGoalsAgainst"
     post_tgoaldiff: str = "PostTotalGoalDiff"
@@ -79,11 +84,8 @@ class Columns:
     post_max_tpoints: str = "PostMaxTotalPoints"
     post_rank: str = "PostRank"
     post_trank: str = "PostTotalRank"
-    post_trank_performance: str = "PostTotalRankPerformance"
     post_tpoint_performance: str = "PostTotalPointPerformance"
-    seasonal_win_loss_ratio: str = "SeasonalWinLossRatio"
-    seasonal_win_ratio: str = "SeasonalWinRatio"
-    seasonal_goal_superiority: str = "SeasonalGoalSuperiority"
+    post_win_ratio: str = "PostWinRatio"
 
     # prior-match cumulation
     prev_tgoalsf: str = "PrevTotalGoalsFor"
@@ -98,18 +100,60 @@ class Columns:
     prev_win_loss_ratio: str = "PrevWinLossRatio"
     prev_hist_win_loss_ratio: str = "PrevHistWinLossRatio"
 
-    # potential predictor columns
-    div: str = "Div"
+    ## potential predictor columns ##
+    # momentum
     home: str = "Home"
+    prev_win_streak: str = "PrevWinStreak"
+    prev_loss_streak: str = "PrevLossStreak"
+    prev_rolling_point_ratio: str = "PrevRollingPointRatio"
+    prev_rolling_goaldiff_ratio: str = "PrevRollingGoalDiffRatio"
+
+    # season performance
     zone: str = "Zone"
-    prev_goal_superiority: str = "PrevGoalSuperiority"
-    prev_win_ratio: str = "PrevWinRatio"
-    prev_trank_performance: str = "PrevTotalRankPerformance"
+    prev_twins: str = "PrevTotalWins"
+    prev_tlosses: str = "PrevTotalLosses"
+    prev_tdraws: str = "PrevTotalDraws"
+    prev_rank: str = "PrevRank"
     prev_tpoint_performance: str = "PrevTotalPointPerformance"
-    prev_hist_goal_superiority: str = "PrevHistoricalGoalSuperiority"
-    prev_hist_win_ratio: str = "PrevHistWinRatio"
-    prev_hist_trank_performance: str = "PrevHistoricalTotalRankPerformance"
+    prev_tgoaldiff: str = "PrevTotalGoalDiff"
+
+    # prev season performance
+    prev_season_div: str = "PrevSeasonDiv"
+    prev_season_trank: str = "PrevSeasonTotalRank"
+    prev_season_twins: str = "PrevSeasonTotalWins"
+    prev_season_tlosses: str = "PrevSeasonTotalLosses"
+    prev_season_tdraws: str = "PrevSeasonTotalDraws"
+    prev_season_tgoaldiff: str = "PrevSeasonTotalGoalDiff"
+    prev_season_tpoint_performance: str = "PrevSeasonTotalPointPerformance"
+
+    # historical performance
+    prev_hist_div: str = "PrevHistoricalDivision"
+    prev_hist_trank: str = "PrevHistoricalTotalRank"
+    prev_hist_twins: str = "PrevHistoricalTotalWins"
+    prev_hist_tlosses: str = "PrevHistoricalTotalLosses"
+    prev_hist_tdraws: str = "PrevHistoricalTotalDraws"
+    prev_hist_tgoaldiff: str = "PrevHistoricalTotalGoalDiff"
     prev_hist_tpoint_performance: str = "PrevHistoricalTotalPointPerformance"
+
+    # relegation effect
+    rel_effect_prev_season_trank: str = "RelEffectPrevSeasonTotalRank"
+    rel_effect_prev_season_twins: str = "RelEffectPrevSeasonTotalWins"
+    rel_effect_prev_season_tlosses: str = "RelEffectPrevSeasonTotalLosses"
+    rel_effect_prev_season_tdraws: str = "RelEffectPrevSeasonTotalDraws"
+    rel_effect_prev_season_tgoaldiff: str = "RelEffectPrevSeasonTotalGoalDiff"
+    rel_effect_prev_season_tpoint_performance: str = (
+        "RelEffectPrevSeasonTotalPointPerformance"
+    )
+
+    # promotion effect
+    prom_effect_prev_season_trank: str = "PromEffectPrevSeasonTotalRank"
+    prom_effect_prev_season_twins: str = "PromEffectPrevSeasonTotalWins"
+    prom_effect_prev_season_tlosses: str = "PromEffectPrevSeasonTotalLosses"
+    prom_effect_prev_season_tdraws: str = "PromEffectPrevSeasonTotalDraws"
+    prom_effect_prev_season_tgoaldiff: str = "PromEffectPrevSeasonTotalGoalDiff"
+    prom_effect_prev_season_tpoint_performance: str = (
+        "PromEffectPrevSeasonTotalPointPerformance"
+    )
 
 
 COLUMNS = Columns()
@@ -117,16 +161,60 @@ COLUMNS = Columns()
 
 @dataclass(frozen=True)
 class Predictors:
+    # momentum
+    # div: str = "Div"
     home: str = "Home"
+    prev_win_streak: str = "PrevWinStreak"
+    prev_loss_streak: str = "PrevLossStreak"
+    prev_rolling_point_ratio: str = "PrevRollingPointRatio"
+    prev_rolling_goaldiff_ratio: str = "PrevRollingGoalDiffRatio"
+
+    # season performance
     zone: str = "Zone"
-    prev_goal_superiority: str = "PrevGoalSuperiority"
-    prev_win_ratio: str = "PrevWinRatio"
-    prev_trank_performance: str = "PrevTotalRankPerformance"
+    prev_twins: str = "PrevTotalWins"
+    prev_tlosses: str = "PrevTotalLosses"
+    prev_tdraws: str = "PrevTotalDraws"
+    prev_rank: str = "PrevRank"
     prev_tpoint_performance: str = "PrevTotalPointPerformance"
-    prev_hist_goal_superiority: str = "PrevHistoricalGoalSuperiority"
-    prev_hist_win_ratio: str = "PrevHistWinRatio"
-    prev_hist_trank_performance: str = "PrevHistoricalTotalRankPerformance"
+    prev_tgoaldiff: str = "PrevTotalGoalDiff"
+
+    # prev season performance
+    prev_season_div: str = "PrevSeasonDiv"
+    prev_season_trank: str = "PrevSeasonTotalRank"
+    prev_season_twins: str = "PrevSeasonTotalWins"
+    prev_season_tlosses: str = "PrevSeasonTotalLosses"
+    prev_season_tdraws: str = "PrevSeasonTotalDraws"
+    prev_season_tgoaldiff: str = "PrevSeasonTotalGoalDiff"
+    prev_season_tpoint_performance: str = "PrevSeasonTotalPointPerformance"
+
+    # historical performance
+    prev_hist_div: str = "PrevHistoricalDivision"
+    prev_hist_trank: str = "PrevHistoricalTotalRank"
+    prev_hist_twins: str = "PrevHistoricalTotalWins"
+    prev_hist_tlosses: str = "PrevHistoricalTotalLosses"
+    prev_hist_tdraws: str = "PrevHistoricalTotalDraws"
+    prev_hist_tgoaldiff: str = "PrevHistoricalTotalGoalDiff"
     prev_hist_tpoint_performance: str = "PrevHistoricalTotalPointPerformance"
+
+    # relegation effect
+    rel_effect_prev_season_trank: str = "RelEffectPrevSeasonTotalRank"
+    rel_effect_prev_season_twins: str = "RelEffectPrevSeasonTotalWins"
+    rel_effect_prev_season_tlosses: str = "RelEffectPrevSeasonTotalLosses"
+    rel_effect_prev_season_tdraws: str = "RelEffectPrevSeasonTotalDraws"
+    rel_effect_prev_season_tgoaldiff: str = "RelEffectPrevSeasonTotalGoalDiff"
+    rel_effect_prev_season_tpoint_performance: str = (
+        "RelEffectPrevSeasonTotalPointPerformance"
+    )
+
+    # promotion effect
+    prom_effect_prev_season_trank: str = "PromEffectPrevSeasonTotalRank"
+    prom_effect_prev_season_twins: str = "PromEffectPrevSeasonTotalWins"
+    prom_effect_prev_season_tlosses: str = "PromEffectPrevSeasonTotalLosses"
+    prom_effect_prev_season_tdraws: str = "PromEffectPrevSeasonTotalDraws"
+    prom_effect_prev_season_tgoaldiff: str = "PromEffectPrevSeasonTotalGoalDiff"
+    prom_effect_prev_season_tpoint_performance: str = (
+        "PromEffectPrevSeasonTotalPointPerformance"
+    )
 
     @classmethod
     def values(cls) -> list[str]:
