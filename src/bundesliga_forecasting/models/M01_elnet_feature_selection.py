@@ -50,7 +50,7 @@ def data_setup(
 
     df = read_csv(input_path)
     df = df.sort_values([cols.date]).reset_index(drop=True)
-    train, test = _split(df)
+    train, valid, test = _split(df)
     model = _train_poisson_elnet(train)
 
     # model output
@@ -61,30 +61,36 @@ def data_setup(
         [cols.goalsf, cols.season, cols.div, cols.date, cols.team] + selected_features
     ]
     df_train = df_selected.loc[train.index]
+    df_valid = df_selected.loc[valid.index]
     df_test = df_selected.loc[test.index]
     save_to_csv(df_train, paths.features / paths.train_file)
+    save_to_csv(df_valid, paths.features / paths.valid_file)
     save_to_csv(df_test, paths.features / paths.test_file)
 
 
 #################################################################
 
 
-def _split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _split(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     logger.info("Splitting the dataset into train and test datasets...")
     check_columns(df, [cols.season, cols.div, cols.date])
     seasons = sorted(df[cols.season].unique())
 
-    train_season = seasons[:-1]
+    train_season = seasons[:-2]
+    valid_season = [seasons[-2]]
     test_season = [seasons[-1]]
 
     train = df[df[cols.season].isin(train_season)].drop(
+        columns=[cols.season, cols.div, cols.date]
+    )
+    valid = df[df[cols.season].isin(valid_season)].drop(
         columns=[cols.season, cols.div, cols.date]
     )
     test = df[df[cols.season].isin(test_season)].drop(
         columns=[cols.season, cols.div, cols.date]
     )
 
-    return train, test
+    return train, valid, test
 
 
 def _train_poisson_elnet(train: pd.DataFrame) -> Pipeline:
